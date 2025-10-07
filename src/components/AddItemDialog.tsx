@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useSupermarkets } from "@/hooks/useSupermarkets";
 
 const categories = [
   "Grãos e Cereais",
@@ -32,6 +33,20 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
   const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [price, setPrice] = useState("");
+  const [supermarket, setSupermarket] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  const { supermarkets, addSupermarket, searchSupermarkets } = useSupermarkets();
+
+  useEffect(() => {
+    if (supermarket) {
+      setSuggestions(searchSupermarkets(supermarket));
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [supermarket]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +56,16 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
       return;
     }
 
+    if (supermarket) {
+      addSupermarket(supermarket);
+    }
+
     onAddItem({
       name,
       category,
       quantity: parseInt(quantity),
       price: parseFloat(price),
+      supermarket: supermarket || undefined,
     });
 
     // Reset form
@@ -53,9 +73,15 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
     setCategory("");
     setQuantity("1");
     setPrice("");
+    setSupermarket("");
     
     toast.success("Item adicionado com sucesso!");
     onOpenChange(false);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSupermarket(suggestion);
+    setShowSuggestions(false);
   };
 
   return (
@@ -91,6 +117,32 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2 relative">
+            <Label htmlFor="supermarket">Supermercado (opcional)</Label>
+            <Input
+              id="supermarket"
+              value={supermarket}
+              onChange={(e) => setSupermarket(e.target.value)}
+              onFocus={() => supermarket && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder="Ex: Carrefour"
+              className="glass border-border/50"
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 glass border border-border/50 rounded-lg shadow-lg max-h-48 overflow-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="px-4 py-2 hover:bg-primary/10 cursor-pointer transition-colors"
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

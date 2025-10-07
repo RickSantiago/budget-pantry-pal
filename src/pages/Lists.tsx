@@ -1,41 +1,108 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Bell, BarChart3 } from "lucide-react";
+import { Plus, Settings, Bell, BarChart3, ArrowLeft } from "lucide-react";
 import FloatingMenu from "@/components/FloatingMenu";
 import ListItem from "@/components/ListItem";
 import AddItemDialog from "@/components/AddItemDialog";
+import CreateListDialog from "@/components/CreateListDialog";
+import ListsOverview from "@/components/ListsOverview";
+import { ShoppingList, ShoppingItem } from "@/types/shopping";
 
-// Mock data
-const mockItems = [
-  { id: "1", name: "Arroz", category: "Grãos e Cereais", quantity: 2, price: 25.90, checked: false },
-  { id: "2", name: "Feijão", category: "Grãos e Cereais", quantity: 1, price: 8.50, checked: false },
-  { id: "3", name: "Frango (peito)", category: "Carnes", quantity: 1, price: 15.99, checked: true },
-  { id: "4", name: "Tomate", category: "Hortifrúti", quantity: 1, price: 6.50, checked: false },
-  { id: "5", name: "Leite", category: "Laticínios", quantity: 2, price: 4.99, checked: false },
-];
+const LISTS_STORAGE_KEY = "shopping-lists";
 
 const Lists = () => {
-  const [items, setItems] = useState(mockItems);
+  const [lists, setLists] = useState<ShoppingList[]>([]);
+  const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
+
+  // Load lists from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(LISTS_STORAGE_KEY);
+    if (stored) {
+      setLists(JSON.parse(stored));
+    }
+  }, []);
+
+  // Save lists to localStorage
+  useEffect(() => {
+    if (lists.length > 0) {
+      localStorage.setItem(LISTS_STORAGE_KEY, JSON.stringify(lists));
+    }
+  }, [lists]);
+
+  const currentList = lists.find(list => list.id === currentListId);
+
+  const handleCreateList = (listData: { title: string; observation: string; date: string }) => {
+    const newList: ShoppingList = {
+      id: Date.now().toString(),
+      ...listData,
+      items: [],
+    };
+    setLists([newList, ...lists]);
+    setCurrentListId(newList.id);
+  };
 
   const handleToggleItem = (id: string) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, checked: !item.checked } : item
-    ));
+    if (!currentList) return;
+    
+    const updatedLists = lists.map(list => {
+      if (list.id === currentListId) {
+        return {
+          ...list,
+          items: list.items.map(item =>
+            item.id === id ? { ...item, checked: !item.checked } : item
+          ),
+        };
+      }
+      return list;
+    });
+    setLists(updatedLists);
   };
 
-  const handleAddItem = (item: any) => {
-    const newItem = {
+  const handleAddItem = (itemData: Omit<ShoppingItem, 'id' | 'checked'>) => {
+    if (!currentList) return;
+
+    const newItem: ShoppingItem = {
       id: Date.now().toString(),
-      ...item,
+      ...itemData,
       checked: false,
     };
-    setItems([...items, newItem]);
+
+    const updatedLists = lists.map(list => {
+      if (list.id === currentListId) {
+        return {
+          ...list,
+          items: [...list.items, newItem],
+        };
+      }
+      return list;
+    });
+    setLists(updatedLists);
   };
 
-  const totalItems = items.length;
-  const checkedItems = items.filter(item => item.checked).length;
-  const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // If no list is selected, show overview
+  if (!currentListId || !currentList) {
+    return (
+      <>
+        <FloatingMenu />
+        <ListsOverview
+          lists={lists}
+          onSelectList={setCurrentListId}
+          onCreateNew={() => setIsCreateListDialogOpen(true)}
+        />
+        <CreateListDialog
+          open={isCreateListDialogOpen}
+          onOpenChange={setIsCreateListDialogOpen}
+          onCreateList={handleCreateList}
+        />
+      </>
+    );
+  }
+
+  const totalItems = currentList.items.length;
+  const checkedItems = currentList.items.filter(item => item.checked).length;
+  const totalPrice = currentList.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
@@ -44,10 +111,21 @@ const Lists = () => {
       {/* Header */}
       <div className="glass sticky top-0 z-10 border-b border-border/50">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold">Lista Janeiro/2025</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+          <div className="flex items-center gap-3 mb-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full"
+              onClick={() => setCurrentListId(null)}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">{currentList.title}</h1>
+              {currentList.observation && (
+                <p className="text-sm text-muted-foreground mt-1">{currentList.observation}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
                 {checkedItems} de {totalItems} itens no carrinho
               </p>
             </div>
@@ -86,18 +164,27 @@ const Lists = () => {
 
       {/* Items List */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-3">
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            className="animate-slide-up"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <ListItem
-              item={item}
-              onToggle={handleToggleItem}
-            />
+        {currentList.items.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">Nenhum item na lista ainda</p>
+            <Button onClick={() => setIsAddDialogOpen(true)} variant="outline" className="glass">
+              Adicionar primeiro item
+            </Button>
           </div>
-        ))}
+        ) : (
+          currentList.items.map((item, index) => (
+            <div
+              key={item.id}
+              className="animate-slide-up"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <ListItem
+                item={item}
+                onToggle={handleToggleItem}
+              />
+            </div>
+          ))
+        )}
       </div>
 
       {/* Floating Add Button */}
