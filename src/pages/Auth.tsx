@@ -31,6 +31,12 @@ const Auth = () => {
     }
   };
 
+  const handleGuestAccess = () => {
+    localStorage.setItem("guest-mode", "true");
+    toast.success("Acesso como convidado");
+    navigate("/lists");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-accent/10">
       <div className="w-full max-w-md animate-fade-in">
@@ -98,17 +104,37 @@ const Auth = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
+          <div className="mt-6 space-y-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/50" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            <Button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              onClick={handleGuestAccess}
+              variant="outline"
+              className="w-full glass border-border/50 hover:bg-primary/5"
             >
-              {isLogin ? "Não tem conta? " : "Já tem conta? "}
-              <span className="font-semibold text-primary">
-                {isLogin ? "Cadastre-se" : "Faça login"}
-              </span>
-            </button>
+              Entrar como convidado
+            </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {isLogin ? "Não tem conta? " : "Já tem conta? "}
+                <span className="font-semibold text-primary">
+                  {isLogin ? "Cadastre-se" : "Faça login"}
+                </span>
+              </button>
+            </div>
           </div>
         </Card>
       </div>
