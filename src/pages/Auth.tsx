@@ -20,21 +20,21 @@ const Auth = () => {
     // Temporary implementation without backend
     if (isLogin) {
       toast.success("Login realizado com sucesso!");
-      navigate("/lists");
+      navigate("/dashboard");
     } else {
       if (!name || !email || !password) {
         toast.error("Por favor, preencha todos os campos");
         return;
       }
       toast.success("Cadastro realizado com sucesso!");
-      navigate("/lists");
+      navigate("/dashboard");
     }
   };
 
   const handleGuestAccess = () => {
     localStorage.setItem("guest-mode", "true");
     toast.success("Acesso como convidado");
-    navigate("/lists");
+    navigate("/dashboard");
   };
 
   return (
