@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 import { 
   Home,
   ShoppingCart, 
@@ -9,7 +10,8 @@ import {
   Settings,
   User,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -20,6 +22,7 @@ const Analytics = () => {
   const navigate = useNavigate();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [expiringItems, setExpiringItems] = useState<(ShoppingItem & { checked: boolean })[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>(["arroz", "feijao"]);
 
   useEffect(() => {
     const stored = localStorage.getItem("shopping-lists");
@@ -58,13 +61,29 @@ const Analytics = () => {
   }));
 
   // Gráfico: Evolução de Preço (mock)
-  const priceEvolutionData = [
-    { mes: "Jan", arroz: 4.5, feijao: 6.2 },
-    { mes: "Fev", arroz: 4.8, feijao: 6.0 },
-    { mes: "Mar", arroz: 5.0, feijao: 6.5 },
-    { mes: "Abr", arroz: 4.9, feijao: 6.3 },
-    { mes: "Mai", arroz: 5.2, feijao: 6.8 },
+  const allPriceEvolutionData = [
+    { mes: "Jan", arroz: 4.5, feijao: 6.2, leite: 4.2, cafe: 12.5, acucar: 3.8 },
+    { mes: "Fev", arroz: 4.8, feijao: 6.0, leite: 4.5, cafe: 12.8, acucar: 4.0 },
+    { mes: "Mar", arroz: 5.0, feijao: 6.5, leite: 4.3, cafe: 13.0, acucar: 4.2 },
+    { mes: "Abr", arroz: 4.9, feijao: 6.3, leite: 4.6, cafe: 13.5, acucar: 4.1 },
+    { mes: "Mai", arroz: 5.2, feijao: 6.8, leite: 4.8, cafe: 14.0, acucar: 4.5 },
   ];
+
+  const availableProducts = [
+    { key: "arroz", label: "Arroz", color: "hsl(var(--primary))" },
+    { key: "feijao", label: "Feijão", color: "hsl(var(--secondary))" },
+    { key: "leite", label: "Leite", color: "hsl(var(--accent))" },
+    { key: "cafe", label: "Café", color: "hsl(var(--success))" },
+    { key: "acucar", label: "Açúcar", color: "hsl(var(--warning))" }
+  ];
+
+  const toggleProduct = (productKey: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productKey) 
+        ? prev.filter(p => p !== productKey)
+        : [...prev, productKey]
+    );
+  };
 
   // Gráfico: Planejado vs Gasto
   const budgetData = [
@@ -73,6 +92,23 @@ const Analytics = () => {
   ];
 
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--warning))'];
+
+  // Custom Tooltip Component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="glass border border-border/50 rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-xs" style={{ color: entry.color }}>
+              {entry.name}: R$ {entry.value.toFixed(2)}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   const handleToggleExpiring = (id: string) => {
     setExpiringItems(prev => {
@@ -115,71 +151,96 @@ const Analytics = () => {
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Gastos por Lista */}
         <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-fade-in">
-          <h2 className="text-base sm:text-lg font-semibold mb-4">Gastos por Lista</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <RechartsBar data={listExpensesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--surface))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <Bar dataKey="total" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-            </RechartsBar>
-          </ResponsiveContainer>
+          <h2 className="text-base sm:text-lg font-semibold mb-4 text-foreground">💰 Gastos por Lista</h2>
+          {listExpensesData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <RechartsBar data={listExpensesData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={11}
+                  tick={{ fill: 'hsl(var(--foreground))' }}
+                />
+                <YAxis 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={11}
+                  tick={{ fill: 'hsl(var(--foreground))' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar 
+                  dataKey="total" 
+                  fill="hsl(var(--primary))" 
+                  radius={[8, 8, 0, 0]}
+                  label={{ position: 'top', fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                />
+              </RechartsBar>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <p className="text-sm">Nenhuma lista criada ainda</p>
+            </div>
+          )}
         </Card>
 
         <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
           {/* Gastos por Supermercado */}
           <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-slide-up">
-            <h2 className="text-base sm:text-lg font-semibold mb-4">Gastos por Supermercado</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={supermarketData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => `${entry.name}: R$ ${entry.value.toFixed(2)}`}
-                  outerRadius={80}
-                  fill="hsl(var(--primary))"
-                  dataKey="value"
-                >
-                  {supermarketData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--surface))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <h2 className="text-base sm:text-lg font-semibold mb-4 text-foreground">🏪 Gastos por Supermercado</h2>
+            {supermarketData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={supermarketData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => {
+                      const percent = ((entry.value / supermarketData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(0);
+                      return `${entry.name} (${percent}%)`;
+                    }}
+                    outerRadius={90}
+                    fill="hsl(var(--primary))"
+                    dataKey="value"
+                  >
+                    {supermarketData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                <p className="text-sm">Nenhum dado disponível</p>
+              </div>
+            )}
           </Card>
 
           {/* Planejado vs Gasto */}
           <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-slide-up">
-            <h2 className="text-base sm:text-lg font-semibold mb-4">Planejado vs Gasto</h2>
-            <ResponsiveContainer width="100%" height={250}>
+            <h2 className="text-base sm:text-lg font-semibold mb-4 text-foreground">💸 Planejado vs Gasto</h2>
+            <ResponsiveContainer width="100%" height={300}>
               <RechartsBar data={budgetData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--surface))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={11}
+                  tick={{ fill: 'hsl(var(--foreground))' }}
                 />
-                <Bar dataKey="value" fill="hsl(var(--secondary))" radius={[8, 8, 0, 0]} />
+                <YAxis 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={11}
+                  tick={{ fill: 'hsl(var(--foreground))' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar 
+                  dataKey="value" 
+                  fill="hsl(var(--secondary))" 
+                  radius={[8, 8, 0, 0]}
+                  label={{ position: 'top', fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                />
               </RechartsBar>
             </ResponsiveContainer>
           </Card>
@@ -187,31 +248,81 @@ const Analytics = () => {
 
         {/* Evolução de Preço */}
         <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-fade-in">
-          <h2 className="text-base sm:text-lg font-semibold mb-4">Evolução de Preço por Produto</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={priceEvolutionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--surface))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="arroz" stroke="hsl(var(--primary))" strokeWidth={2} />
-              <Line type="monotone" dataKey="feijao" stroke="hsl(var(--secondary))" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-foreground">📈 Evolução de Preço por Produto</h2>
+          </div>
+          
+          {/* Filtro de Produtos */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            {availableProducts.map(product => (
+              <Badge
+                key={product.key}
+                variant={selectedProducts.includes(product.key) ? "default" : "outline"}
+                className="cursor-pointer px-3 py-1.5 text-xs rounded-full transition-all hover:scale-105"
+                style={selectedProducts.includes(product.key) ? { 
+                  backgroundColor: product.color,
+                  borderColor: product.color,
+                  color: 'white'
+                } : {}}
+                onClick={() => toggleProduct(product.key)}
+              >
+                {product.label}
+                {selectedProducts.includes(product.key) && (
+                  <X className="w-3 h-3 ml-1 inline" />
+                )}
+              </Badge>
+            ))}
+          </div>
+
+          {selectedProducts.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={allPriceEvolutionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis 
+                  dataKey="mes" 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={11}
+                  tick={{ fill: 'hsl(var(--foreground))' }}
+                />
+                <YAxis 
+                  stroke="hsl(var(--foreground))" 
+                  fontSize={11}
+                  tick={{ fill: 'hsl(var(--foreground))' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  iconType="line"
+                />
+                {selectedProducts.map(productKey => {
+                  const product = availableProducts.find(p => p.key === productKey);
+                  return (
+                    <Line 
+                      key={productKey}
+                      type="monotone" 
+                      dataKey={productKey} 
+                      stroke={product?.color} 
+                      strokeWidth={3}
+                      name={product?.label}
+                      dot={{ fill: product?.color, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  );
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <p className="text-sm">Selecione ao menos um produto para visualizar</p>
+            </div>
+          )}
         </Card>
 
         {/* Itens Próximos do Vencimento */}
         <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-scale-in">
-          <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
             <AlertTriangle className="w-5 h-5 text-warning" />
-            Itens Próximos do Vencimento
+            ⏰ Itens Próximos do Vencimento
           </h2>
           <div className="space-y-2 sm:space-y-3">
             {expiringItems.map((item) => (
