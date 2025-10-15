@@ -139,13 +139,13 @@ const Lists = () => {
         <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 z-20">
           <Card className="glass border-border/50 shadow-glow rounded-2xl sm:rounded-3xl overflow-hidden">
             <div className="flex items-center justify-around p-1.5 sm:p-2">
-              {[
-                { icon: Home, text: "Home", path: "/dashboard" },
-                { icon: ShoppingCart, text: "Lista", path: "/lists" },
-                { icon: BarChart, text: "Gráficos", path: "/dashboard" },
-                { icon: Bell, text: "Avisos", path: "/dashboard" },
-                { icon: Settings, text: "Config", path: "/dashboard" }
-              ].map((item, index) => (
+            {[
+              { icon: BarChart, text: "Gráficos", path: "/analytics" },
+              { icon: ShoppingCart, text: "Lista", path: "/lists" },
+              { icon: Home, text: "Home", path: "/dashboard" },
+              { icon: Bell, text: "Avisos", path: "/dashboard" },
+              { icon: Settings, text: "Config", path: "/dashboard" }
+            ].map((item, index) => (
                 <Button
                   key={index}
                   variant="ghost"
@@ -262,9 +262,9 @@ const Lists = () => {
         <Card className="glass border-border/50 shadow-glow rounded-2xl sm:rounded-3xl overflow-hidden">
           <div className="flex items-center justify-around p-1.5 sm:p-2">
             {[
-              { icon: Home, text: "Home", path: "/dashboard" },
+              { icon: BarChart, text: "Gráficos", path: "/analytics" },
               { icon: ShoppingCart, text: "Lista", path: "/lists" },
-              { icon: BarChart, text: "Gráficos", path: "/dashboard" },
+              { icon: Home, text: "Home", path: "/dashboard" },
               { icon: Bell, text: "Avisos", path: "/dashboard" },
               { icon: Settings, text: "Config", path: "/dashboard" }
             ].map((item, index) => (
