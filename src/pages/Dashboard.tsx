@@ -96,7 +96,7 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold gradient-primary bg-clip-text text-transparent truncate">
+              <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
                 Lista Inteligente
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">
