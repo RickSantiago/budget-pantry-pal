@@ -9,12 +9,13 @@ import { toast } from "sonner";
 interface CreateListDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateList: (list: { title: string; observation: string; date: string }) => void;
+  onCreateList: (list: { title: string; observation: string; date: string; plannedBudget?: number }) => void;
 }
 
 const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialogProps) => {
   const [title, setTitle] = useState("");
   const [observation, setObservation] = useState("");
+  const [plannedBudget, setPlannedBudget] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,10 +29,12 @@ const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialog
       title: title.trim(),
       observation: observation.trim(),
       date: new Date().toISOString(),
+      plannedBudget: plannedBudget ? parseFloat(plannedBudget) : undefined,
     });
 
     setTitle("");
     setObservation("");
+    setPlannedBudget("");
     toast.success("Lista criada com sucesso!");
     onOpenChange(false);
   };
@@ -63,6 +66,20 @@ const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialog
               onChange={(e) => setObservation(e.target.value)}
               placeholder="Adicione uma observação..."
               className="glass border-border/50 min-h-[100px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="plannedBudget">Gasto Planejado (R$)</Label>
+            <Input
+              id="plannedBudget"
+              type="number"
+              step="0.01"
+              min="0"
+              value={plannedBudget}
+              onChange={(e) => setPlannedBudget(e.target.value)}
+              placeholder="0.00"
+              className="glass border-border/50"
             />
           </div>
 

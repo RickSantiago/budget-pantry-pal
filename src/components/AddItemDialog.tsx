@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSupermarkets } from "@/hooks/useSupermarkets";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const categories = [
   "Grãos e Cereais",
@@ -26,14 +27,18 @@ interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddItem: (item: any) => void;
+  listTitle?: string;
 }
 
-const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) => {
+const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDialogProps) => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
-  const [quantity, setQuantity] = useState("1");
+  const [quantity, setQuantity] = useState(1);
+  const [unit, setUnit] = useState("un");
   const [price, setPrice] = useState("");
   const [supermarket, setSupermarket] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [isRecurring, setIsRecurring] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
@@ -63,17 +68,23 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
     onAddItem({
       name,
       category,
-      quantity: parseInt(quantity),
+      quantity,
+      unit,
       price: parseFloat(price),
       supermarket: supermarket || undefined,
+      expiryDate: expiryDate || undefined,
+      isRecurring,
     });
 
     // Reset form
     setName("");
     setCategory("");
-    setQuantity("1");
+    setQuantity(1);
+    setUnit("un");
     setPrice("");
     setSupermarket("");
+    setExpiryDate("");
+    setIsRecurring(false);
     
     toast.success("Item adicionado com sucesso!");
     onOpenChange(false);
@@ -89,6 +100,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
       <DialogContent className="glass border-border/50 shadow-xl max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Adicionar Item</DialogTitle>
+          {listTitle && <p className="text-sm text-muted-foreground mt-1">{listTitle}</p>}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
@@ -148,29 +160,89 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem }: AddItemDialogProps) =>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantidade</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="glass border-border/50"
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="glass border-border/50 h-10 w-10"
+                >
+                  -
+                </Button>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  className="glass border-border/50 text-center"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="glass border-border/50 h-10 w-10"
+                >
+                  +
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price">Preço (R$)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                className="glass border-border/50"
-              />
+              <Label htmlFor="unit">Unidade</Label>
+              <Select value={unit} onValueChange={setUnit}>
+                <SelectTrigger className="glass border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass border-border/50">
+                  <SelectItem value="un">Unidade</SelectItem>
+                  <SelectItem value="kg">Kg</SelectItem>
+                  <SelectItem value="g">Gramas</SelectItem>
+                  <SelectItem value="l">Litro</SelectItem>
+                  <SelectItem value="ml">ML</SelectItem>
+                  <SelectItem value="cx">Caixa</SelectItem>
+                  <SelectItem value="pct">Pacote</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="price">Preço (R$)</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="0.00"
+              className="glass border-border/50"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expiryDate">Validade (opcional)</Label>
+            <Input
+              id="expiryDate"
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              className="glass border-border/50"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isRecurring"
+              checked={isRecurring}
+              onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+            />
+            <Label htmlFor="isRecurring" className="cursor-pointer">
+              Item de compra recorrente
+            </Label>
           </div>
 
           <Button 

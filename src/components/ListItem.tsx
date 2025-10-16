@@ -7,6 +7,7 @@ interface ListItemProps {
     name: string;
     category: string;
     quantity: number;
+    unit: string;
     price: number;
     checked: boolean;
   };
@@ -39,7 +40,7 @@ const ListItem = ({ item, onToggle }: ListItemProps) => {
             R$ {(item.price * item.quantity).toFixed(2)}
           </p>
           <p className="text-sm text-muted-foreground">
-            {item.quantity}x R$ {item.price.toFixed(2)}
+            {item.quantity}{item.unit} x R$ {item.price.toFixed(2)}
           </p>
         </div>
       </div>

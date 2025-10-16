@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Settings, Bell, BarChart3, ArrowLeft, Home, ShoppingCart, BarChart, User } from "lucide-react";
+import { Plus, Settings, Bell, BarChart3, ArrowLeft, Home, ShoppingCart, BarChart, User, X, AlertTriangle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import ListItem from "@/components/ListItem";
@@ -9,6 +9,8 @@ import AddItemDialog from "@/components/AddItemDialog";
 import CreateListDialog from "@/components/CreateListDialog";
 import ListsOverview from "@/components/ListsOverview";
 import { ShoppingList, ShoppingItem } from "@/types/shopping";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LISTS_STORAGE_KEY = "shopping-lists";
 
@@ -18,6 +20,7 @@ const Lists = () => {
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
+  const [showBudgetAlert, setShowBudgetAlert] = useState(true);
 
   // Load lists from localStorage
   useEffect(() => {
@@ -36,7 +39,7 @@ const Lists = () => {
 
   const currentList = lists.find(list => list.id === currentListId);
 
-  const handleCreateList = (listData: { title: string; observation: string; date: string }) => {
+  const handleCreateList = (listData: { title: string; observation: string; date: string; plannedBudget?: number }) => {
     const newList: ShoppingList = {
       id: Date.now().toString(),
       ...listData,
@@ -166,6 +169,9 @@ const Lists = () => {
   const totalItems = currentList.items.length;
   const checkedItems = currentList.items.filter(item => item.checked).length;
   const totalPrice = currentList.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const plannedBudget = currentList.plannedBudget || 0;
+  const budgetProgress = plannedBudget > 0 ? (totalPrice / plannedBudget) * 100 : 0;
+  const isOverBudget = plannedBudget > 0 && totalPrice > plannedBudget;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
@@ -204,17 +210,61 @@ const Lists = () => {
             </div>
           </div>
 
+          {/* Budget Alert */}
+          {isOverBudget && showBudgetAlert && (
+            <Alert className="glass border-destructive/50 bg-destructive/10 mb-4">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertDescription className="flex items-center justify-between">
+                <span className="text-sm">
+                  Valor ultrapassou o planejado em R$ {(totalPrice - plannedBudget).toFixed(2)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 -mr-2"
+                  onClick={() => setShowBudgetAlert(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Summary Card */}
-          <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md">
+          <div className="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md space-y-3">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Total estimado</p>
-                <p className="text-lg sm:text-2xl font-bold text-primary">
+                <p className="text-xs sm:text-sm text-muted-foreground">Gasto Atual</p>
+                <p className={`text-lg sm:text-2xl font-bold ${isOverBudget ? 'text-destructive' : 'text-primary'}`}>
                   R$ {totalPrice.toFixed(2)}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-xs sm:text-sm text-muted-foreground">Progresso</p>
+              {plannedBudget > 0 && (
+                <div className="text-right">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Planejado</p>
+                  <p className="text-base sm:text-lg font-semibold">
+                    R$ {plannedBudget.toFixed(2)}
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            {plannedBudget > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Orçamento</span>
+                  <span>{budgetProgress.toFixed(0)}%</span>
+                </div>
+                <Progress 
+                  value={Math.min(budgetProgress, 100)} 
+                  className={`h-2 ${isOverBudget ? '[&>div]:bg-destructive' : ''}`}
+                />
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-border/50">
+              <div className="flex justify-between items-center">
+                <p className="text-xs sm:text-sm text-muted-foreground">Progresso de Itens</p>
                 <p className="text-base sm:text-lg font-semibold">
                   {totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0}%
                 </p>
@@ -286,6 +336,7 @@ const Lists = () => {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onAddItem={handleAddItem}
+        listTitle={currentList.title}
       />
     </div>
   );

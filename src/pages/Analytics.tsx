@@ -32,9 +32,9 @@ const Analytics = () => {
       
       // Mock expiring items (você pode adaptar para pegar de verdade)
       const mockExpiring: (ShoppingItem & { checked: boolean })[] = [
-        { id: "1", name: "Leite", category: "Laticínios", quantity: 2, price: 4.5, supermarket: "SuperX", checked: false },
-        { id: "2", name: "Iogurte", category: "Laticínios", quantity: 6, price: 3.2, supermarket: "Mercado Y", checked: false },
-        { id: "3", name: "Queijo", category: "Laticínios", quantity: 1, price: 15.0, supermarket: "SuperX", checked: false },
+        { id: "1", name: "Leite", category: "Laticínios", quantity: 2, unit: "l", price: 4.5, supermarket: "SuperX", checked: false },
+        { id: "2", name: "Iogurte", category: "Laticínios", quantity: 6, unit: "un", price: 3.2, supermarket: "Mercado Y", checked: false },
+        { id: "3", name: "Queijo", category: "Laticínios", quantity: 1, unit: "kg", price: 15.0, supermarket: "SuperX", checked: false },
       ];
       setExpiringItems(mockExpiring);
     }
