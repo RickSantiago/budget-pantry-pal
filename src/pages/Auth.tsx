@@ -17,15 +17,39 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Temporary implementation without backend
     if (isLogin) {
-      toast.success("Login realizado com sucesso!");
-      navigate("/dashboard");
+      // Check if user exists in localStorage
+      const storedUsers = localStorage.getItem("app-users");
+      const users = storedUsers ? JSON.parse(storedUsers) : [];
+      const user = users.find((u: any) => u.email === email && u.password === password);
+      
+      if (user) {
+        localStorage.setItem("current-user", JSON.stringify({ name: user.name, email: user.email }));
+        toast.success("Login realizado com sucesso!");
+        navigate("/dashboard");
+      } else {
+        toast.error("Email ou senha incorretos");
+      }
     } else {
       if (!name || !email || !password) {
         toast.error("Por favor, preencha todos os campos");
         return;
       }
+      
+      // Save new user to localStorage
+      const storedUsers = localStorage.getItem("app-users");
+      const users = storedUsers ? JSON.parse(storedUsers) : [];
+      
+      // Check if user already exists
+      if (users.find((u: any) => u.email === email)) {
+        toast.error("Email já cadastrado");
+        return;
+      }
+      
+      users.push({ name, email, password });
+      localStorage.setItem("app-users", JSON.stringify(users));
+      localStorage.setItem("current-user", JSON.stringify({ name, email }));
+      
       toast.success("Cadastro realizado com sucesso!");
       navigate("/dashboard");
     }

@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import ListItem from "@/components/ListItem";
 import AddItemDialog from "@/components/AddItemDialog";
+import EditItemDialog from "@/components/EditItemDialog";
 import CreateListDialog from "@/components/CreateListDialog";
 import ListsOverview from "@/components/ListsOverview";
 import { ShoppingList, ShoppingItem } from "@/types/shopping";
@@ -19,6 +20,8 @@ const Lists = () => {
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
   const [showBudgetAlert, setShowBudgetAlert] = useState(true);
 
@@ -85,6 +88,32 @@ const Lists = () => {
       return list;
     });
     setLists(updatedLists);
+  };
+
+  const handleEditItem = (updatedItem: ShoppingItem) => {
+    if (!currentList) return;
+
+    const updatedLists = lists.map(list => {
+      if (list.id === currentListId) {
+        return {
+          ...list,
+          items: list.items.map(item =>
+            item.id === updatedItem.id ? updatedItem : item
+          ),
+        };
+      }
+      return list;
+    });
+    setLists(updatedLists);
+  };
+
+  const handleOpenEditDialog = (itemId: string) => {
+    if (!currentList) return;
+    const item = currentList.items.find(i => i.id === itemId);
+    if (item) {
+      setEditingItem(item);
+      setIsEditDialogOpen(true);
+    }
   };
 
   // If no list is selected, show overview with new layout
@@ -293,6 +322,7 @@ const Lists = () => {
               <ListItem
                 item={item}
                 onToggle={handleToggleItem}
+                onEdit={handleOpenEditDialog}
               />
             </div>
           ))
@@ -336,6 +366,14 @@ const Lists = () => {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onAddItem={handleAddItem}
+        listTitle={currentList.title}
+      />
+
+      <EditItemDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onEditItem={handleEditItem}
+        item={editingItem}
         listTitle={currentList.title}
       />
     </div>

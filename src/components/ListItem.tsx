@@ -1,5 +1,6 @@
-import { Check } from "lucide-react";
+import { Check, Edit } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 interface ListItemProps {
   item: {
@@ -12,9 +13,10 @@ interface ListItemProps {
     checked: boolean;
   };
   onToggle: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
-const ListItem = ({ item, onToggle }: ListItemProps) => {
+const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
   return (
     <div
       className={`glass rounded-2xl p-4 border border-border/50 transition-all duration-300 hover:shadow-md ${
@@ -35,7 +37,7 @@ const ListItem = ({ item, onToggle }: ListItemProps) => {
           <p className="text-sm text-muted-foreground">{item.category}</p>
         </div>
 
-        <div className="text-right">
+        <div className="text-right flex-shrink-0">
           <p className="font-semibold">
             R$ {(item.price * item.quantity).toFixed(2)}
           </p>
@@ -43,6 +45,15 @@ const ListItem = ({ item, onToggle }: ListItemProps) => {
             {item.quantity}{item.unit} x R$ {item.price.toFixed(2)}
           </p>
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEdit(item.id)}
+          className="flex-shrink-0 rounded-full h-9 w-9 hover:bg-primary/10"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
