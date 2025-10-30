@@ -23,6 +23,7 @@ const Analytics = () => {
   const navigate = useNavigate();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [expiringItems, setExpiringItems] = useState<(ShoppingItem & { checked: boolean })[]>([]);
+  const [showAllExpiring, setShowAllExpiring] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>(["arroz", "feijao"]);
 
   useEffect(() => {
@@ -30,16 +31,34 @@ const Analytics = () => {
     if (stored) {
       const parsedLists = JSON.parse(stored);
       setLists(parsedLists);
+      const today = new Date();
+      let expiring: (ShoppingItem & { checked: boolean })[] = [];
+      let allExpiring: (ShoppingItem & { checked: boolean })[] = [];
+      parsedLists.forEach(list => {
+        list.items.forEach(item => {
+          if (item.expiryDate) {
+            const expiry = new Date(item.expiryDate);
+            const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0 && diffDays <= 20) {
+              expiring.push({ ...item, checked: !!item.checked });
+            }
+            if (diffDays >= 0) {
+              allExpiring.push({ ...item, checked: !!item.checked });
+            }
+          }
+        });
+      });
+      // Ordena todos por data
+      allExpiring = allExpiring.sort((a, b) => {
+        const aDate = new Date(a.expiryDate!).getTime();
+        const bDate = new Date(b.expiryDate!).getTime();
+        return aDate - bDate;
+      });
+      setExpiringItems(showAllExpiring ? allExpiring : expiring);
+    } else {
+      setExpiringItems([]);
     }
-
-    // Mock expiring items (adapt as needed)
-    const mockExpiring: (ShoppingItem & { checked: boolean })[] = [
-      { id: "1", name: "Leite", category: "Laticínios", quantity: 2, unit: "l", price: 4.5, supermarket: "SuperX", checked: false },
-      { id: "2", name: "Iogurte", category: "Laticínios", quantity: 6, unit: "un", price: 3.2, supermarket: "Mercado Y", checked: false },
-      { id: "3", name: "Queijo", category: "Laticínios", quantity: 1, unit: "kg", price: 15.0, supermarket: "SuperX", checked: false },
-    ];
-    setExpiringItems(mockExpiring);
-  }, []);
+  }, [showAllExpiring]);
 
   // Gastos por Lista
   // allowedUnits: unidade, caixa, pacote
@@ -271,28 +290,66 @@ const Analytics = () => {
         </Card>
 
         {/* Itens Próximos do Vencimento */}
-        <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-scale-in">
-          <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2 text-foreground"><AlertTriangle className="w-5 h-5 text-warning" />⏰ Itens Próximos do Vencimento</h2>
-          <div className="space-y-2 sm:space-y-3">
-            {expiringItems.map((item) => (
-              <div key={item.id} className={`glass border border-border/50 p-3 sm:p-4 rounded-xl transition-all hover:shadow-md ${item.checked ? 'opacity-50' : ''}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 flex-shrink-0" onClick={() => handleToggleExpiring(item.id)}>
-                      {item.checked ? <CheckCircle className="w-5 h-5 text-success" /> : <div className="w-5 h-5 border-2 border-muted-foreground rounded-full" />}
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm sm:text-base font-medium truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.quantity}x • {item.supermarket}</p>
+        <Card className="glass border-warning/30 border-2 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-scale-in shadow-lg">
+          <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2 text-warning">
+            <AlertTriangle className="w-5 h-5 text-warning animate-pulse" />⏰ Itens Próximos do Vencimento
+          </h2>
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={!showAllExpiring ? "default" : "outline"}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setShowAllExpiring(false)}
+            >
+              Até 20 dias
+            </Button>
+            <Button
+              variant={showAllExpiring ? "default" : "outline"}
+              size="sm"
+              className="rounded-full"
+              onClick={() => setShowAllExpiring(true)}
+            >
+              Todos com validade
+            </Button>
+          </div>
+          {expiringItems.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground mb-2">Nenhum item próximo do vencimento.</p>
+              <p className="text-xs text-warning">Veja os itens com datas mais próximas de validade:</p>
+            </div>
+          ) : null}
+          <div className="space-y-3">
+            {expiringItems.map((item) => {
+              const today = new Date();
+              const expiry = new Date(item.expiryDate!);
+              const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              let color = "text-success bg-success/10";
+              if (diffDays <= 20) color = "text-destructive bg-destructive/10";
+              else if (diffDays <= 30) color = "text-warning bg-warning/10";
+              return (
+                <div key={item.id} className={`glass border border-border/50 p-3 sm:p-4 rounded-xl flex items-center gap-4 transition-all hover:shadow-md ${item.checked ? 'opacity-50' : ''}`}>
+                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 flex-shrink-0" onClick={() => handleToggleExpiring(item.id)}>
+                    {item.checked ? <CheckCircle className="w-5 h-5 text-success" /> : <div className="w-5 h-5 border-2 border-muted-foreground rounded-full" />}
+                  </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-base font-semibold truncate ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
+                    <div className="flex flex-wrap gap-2 text-xs mt-1">
+                      {item.quantity && <span className="bg-primary/10 px-2 py-0.5 rounded-full">{item.quantity}x</span>}
+                      {item.supermarket && <span className="bg-accent/10 px-2 py-0.5 rounded-full">{item.supermarket}</span>}
+                      {item.expiryDate && (
+                        <span className={`px-2 py-0.5 rounded-full ${color}`}>
+                          Vence em {diffDays > 0 ? `${diffDays} dias` : 'hoje'}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm sm:text-base font-semibold text-warning">R$ {(item.price * item.quantity).toFixed(2)}</p>
+                    <p className={`text-base font-bold ${color.replace('bg-', 'text-')}`}>R$ {(item.price * (item.quantity ?? 1)).toFixed(2)}</p>
                     {item.checked && <p className="text-xs text-success">Acabou</p>}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       </div>
