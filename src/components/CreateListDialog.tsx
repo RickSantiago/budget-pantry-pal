@@ -10,12 +10,19 @@ interface CreateListDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateList: (list: { title: string; observation: string; date: string; plannedBudget?: number }) => void;
+  initialData?: {
+    title?: string;
+    observation?: string;
+    date?: string;
+    plannedBudget?: number;
+  };
 }
 
-const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialogProps) => {
-  const [title, setTitle] = useState("");
-  const [observation, setObservation] = useState("");
-  const [plannedBudget, setPlannedBudget] = useState("");
+const CreateListDialog = ({ open, onOpenChange, onCreateList, initialData }: CreateListDialogProps) => {
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [observation, setObservation] = useState(initialData?.observation || "");
+  const [plannedBudget, setPlannedBudget] = useState(initialData?.plannedBudget?.toString() || "");
+  const [date, setDate] = useState(initialData?.date ? initialData.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,15 +35,15 @@ const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialog
     onCreateList({
       title: title.trim(),
       observation: observation.trim(),
-      date: new Date().toISOString(),
+      date: date,
       plannedBudget: plannedBudget ? parseFloat(plannedBudget) : undefined,
     });
 
     setTitle("");
     setObservation("");
     setPlannedBudget("");
-    toast.success("Lista criada com sucesso!");
-    onOpenChange(false);
+  toast.success("Lista criada com sucesso!");
+  onOpenChange(false);
   };
 
   return (
@@ -70,6 +77,16 @@ const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialog
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="date">Data de referência da compra</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="glass border-border/50"
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="plannedBudget">Gasto Planejado (R$)</Label>
             <Input
               id="plannedBudget"
@@ -87,7 +104,7 @@ const CreateListDialog = ({ open, onOpenChange, onCreateList }: CreateListDialog
             type="submit" 
             className="w-full gradient-primary border-none shadow-glow hover:shadow-lg transition-all duration-300"
           >
-            Criar Lista
+            {initialData ? "Salvar Alterações" : "Criar Lista"}
           </Button>
         </form>
       </DialogContent>

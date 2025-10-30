@@ -22,6 +22,8 @@ const categories = [
   "Limpeza",
   "Higiene",
   "Frios",
+  "Oleos e Gorduras",
+  "Outros"
 ];
 
 interface AddItemDialogProps {
@@ -34,12 +36,12 @@ interface AddItemDialogProps {
 
 const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDialogProps) => {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(""); // opcional
   const [quantity, setQuantity] = useState(1);
   const [unit, setUnit] = useState("un");
-  const [price, setPrice] = useState("");
-  const [supermarket, setSupermarket] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
+  const [price, setPrice] = useState(""); // opcional
+  const [supermarket, setSupermarket] = useState(""); // opcional
+  const [expiryDate, setExpiryDate] = useState(""); // opcional
   const [isRecurring, setIsRecurring] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -57,9 +59,8 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!name || !category || !quantity || !price) {
-      toast.error("Preencha todos os campos");
+    if (!name || !quantity) {
+      toast.error("Preencha o nome e a quantidade");
       return;
     }
 
@@ -69,10 +70,10 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
 
     onAddItem({
       name,
-      category,
+      category: category || undefined,
       quantity,
       unit,
-      price: parseFloat(price),
+      price: price ? parseFloat(price) : undefined,
       supermarket: supermarket || undefined,
       expiryDate: expiryDate || undefined,
       isRecurring,
@@ -87,7 +88,6 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
     setSupermarket("");
     setExpiryDate("");
     setIsRecurring(false);
-    
     toast.success("Item adicionado com sucesso!");
     onOpenChange(false);
   };
@@ -118,7 +118,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="category">Categoria (opcional)</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="glass border-border/50">
                 <SelectValue placeholder="Selecione a categoria" />
@@ -134,7 +134,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
           </div>
 
           <div className="space-y-2 relative">
-            <Label htmlFor="supermarket">Supermercado (opcional)</Label>
+            <Label htmlFor="supermarket">Supermercado</Label>
             <Input
               id="supermarket"
               value={supermarket}
@@ -212,7 +212,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="price">Preço (R$)</Label>
+            <Label htmlFor="price">Preço R$</Label>
             <Input
               id="price"
               type="number"

@@ -47,7 +47,7 @@ const BottomNavigation = () => {
               current === item.path ||
               (item.path !== "/" && current.startsWith(item.path));
 
-            const baseClass = `inline-flex items-center gap-1 sm:gap-2 transition-transform duration-300 ease-in-out transform rounded-xl focus:outline-none will-change-transform`;
+            const baseClass = `inline-flex items-center gap-1 sm:gap-2 transition-transform duration-300 ease-in-out transform rounded-3xl focus:outline-none will-change-transform`;
             const activeClass = `bg-primary text-white px-4 py-1.5 shadow-sm font-semibold scale-105`;
             const inactiveClass = `px-2 py-1.5 text-muted-foreground hover:bg-primary/5 scale-100`;
 

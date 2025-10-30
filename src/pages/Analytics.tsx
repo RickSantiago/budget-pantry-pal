@@ -42,9 +42,19 @@ const Analytics = () => {
   }, []);
 
   // Gastos por Lista
+  // allowedUnits: unidade, caixa, pacote
+  const allowedUnits = ["unidade", "caixa", "pacote"];
   const listExpensesData = lists.map(list => ({
     name: list.title.substring(0, 15),
-    total: list.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    total: list.items.reduce((sum, item) => {
+      const price = Number(item.price) || 0;
+      const unit = item.unit ? String(item.unit).toLowerCase() : "";
+      if (allowedUnits.includes(unit)) {
+        return sum + price * item.quantity;
+      } else {
+        return sum + price;
+      }
+    }, 0)
   }));
 
   // Gastos por Supermercado
@@ -52,20 +62,46 @@ const Analytics = () => {
   lists.forEach(list => {
     list.items.forEach(item => {
       if (item.supermarket) {
-        supermarketExpenses[item.supermarket] = (supermarketExpenses[item.supermarket] || 0) + (item.price * item.quantity);
+        const price = Number(item.price) || 0;
+        const unit = item.unit ? String(item.unit).toLowerCase() : "";
+        if (allowedUnits.includes(unit)) {
+          supermarketExpenses[item.supermarket] = (supermarketExpenses[item.supermarket] || 0) + price * item.quantity;
+        } else {
+          supermarketExpenses[item.supermarket] = (supermarketExpenses[item.supermarket] || 0) + price;
+        }
       }
     });
   });
   const supermarketData = Object.entries(supermarketExpenses).map(([name, value]) => ({ name, value }));
 
-  // Evolução de Preço (mock)
-  const allPriceEvolutionData = [
-    { mes: "Jan", arroz: 4.5, feijao: 6.2, leite: 4.2, cafe: 12.5, acucar: 3.8 },
-    { mes: "Fev", arroz: 4.8, feijao: 6.0, leite: 4.5, cafe: 12.8, acucar: 4.0 },
-    { mes: "Mar", arroz: 5.0, feijao: 6.5, leite: 4.3, cafe: 13.0, acucar: 4.2 },
-    { mes: "Abr", arroz: 4.9, feijao: 6.3, leite: 4.6, cafe: 13.5, acucar: 4.1 },
-    { mes: "Mai", arroz: 5.2, feijao: 6.8, leite: 4.8, cafe: 14.0, acucar: 4.5 },
-  ];
+  // Evolução de Preço (real)
+  // Agrupa os preços dos produtos por mês das listas cadastradas
+  function getMonthName(dateStr: string) {
+    const date = new Date(dateStr);
+    return date.toLocaleString('pt-BR', { month: 'short' });
+  }
+  const productKeys = ["arroz", "feijao", "leite", "cafe", "acucar"];
+  const monthProductMap: Record<string, Record<string, number[]>> = {};
+  lists.forEach(list => {
+    const month = getMonthName(list.date);
+    if (!monthProductMap[month]) monthProductMap[month] = {};
+    list.items.forEach(item => {
+      const key = productKeys.find(k => item.name.toLowerCase().includes(k));
+      if (key) {
+        if (!monthProductMap[month][key]) monthProductMap[month][key] = [];
+        monthProductMap[month][key].push(Number(item.price));
+      }
+    });
+  });
+  const allPriceEvolutionData = Object.entries(monthProductMap).map(([mes, products]) => {
+  const entry: Record<string, number | string | undefined> = { mes };
+    productKeys.forEach(key => {
+      entry[key] = products[key]?.length
+        ? (products[key].reduce((a, b) => a + b, 0) / products[key].length)
+        : undefined;
+    });
+    return entry;
+  });
 
   const availableProducts = [
     { key: "arroz", label: "Arroz", color: "hsl(var(--primary))" },
@@ -81,10 +117,16 @@ const Analytics = () => {
     );
   };
 
-  // Planejado vs Gasto
+  // Planejado vs Gasto com filtro por mês
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  // Usa a data de referência da compra para o filtro de mês
+  const months = Array.from(new Set(lists.map(list => getMonthName(list.date))));
+  const filteredLists = selectedMonth
+    ? lists.filter(list => getMonthName(list.date) === selectedMonth)
+    : lists;
   const budgetData = [
-    { name: "Planejado", value: 500 },
-    { name: "Gasto", value: lists.reduce((sum, list) => sum + list.items.reduce((s, i) => s + (i.price * i.quantity), 0), 0) }
+    { name: "Planejado", value: filteredLists.reduce((sum, list) => sum + (list.plannedBudget || 0), 0) },
+    { name: "Gasto", value: filteredLists.reduce((sum, list) => sum + list.items.reduce((s, i) => s + (i.price * i.quantity), 0), 0) }
   ];
 
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--warning))'];
@@ -129,8 +171,20 @@ const Analytics = () => {
           </Button>
         }
       />
-
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Filtrar por mês:</label>
+          <select
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            className="border rounded px-3 py-2 text-sm"
+          >
+            <option value="">Todos</option>
+            {months.map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
         {/* Gastos por Lista */}
         <Card className="glass border-border/50 p-4 sm:p-6 rounded-xl sm:rounded-2xl animate-fade-in">
           <h2 className="text-base sm:text-lg font-semibold mb-4 text-foreground">💰 Gastos por Lista</h2>
@@ -242,7 +296,6 @@ const Analytics = () => {
           </div>
         </Card>
       </div>
-
       {/* Bottom Navigation */}
       <BottomNavigation />
     </div>

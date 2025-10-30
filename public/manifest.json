@@ -1,0 +1,22 @@
+{
+  "name": "Budget Pantry Pal",
+  "short_name": "PantryPal",
+  "description": "Organize suas compras e orçamento de supermercado.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48 64x64 128x128 256x256 512x512",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "placeholder.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

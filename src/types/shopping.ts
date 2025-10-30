@@ -1,10 +1,10 @@
 export interface ShoppingItem {
   id: string;
   name: string;
-  category: string;
-  quantity: number;
-  unit: string;
-  price: number;
+  category?: string;
+  quantity?: number;
+  unit?: string;
+  price?: number;
   checked: boolean;
   supermarket?: string;
   expiryDate?: string;

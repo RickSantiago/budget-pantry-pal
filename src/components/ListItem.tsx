@@ -6,11 +6,14 @@ interface ListItemProps {
   item: {
     id: string;
     name: string;
-    category: string;
-    quantity: number;
-    unit: string;
-    price: number;
+    category?: string;
+    quantity?: number;
+    unit?: string;
+    price?: number;
     checked: boolean;
+    supermarket?: string;
+    expiryDate?: string;
+    isRecurring?: boolean;
   };
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
@@ -19,9 +22,7 @@ interface ListItemProps {
 const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
   return (
     <div
-      className={`glass rounded-2xl p-4 border border-border/50 transition-all duration-300 hover:shadow-md ${
-        item.checked ? "opacity-60" : ""
-      }`}
+      className={`glass rounded-2xl p-4 border border-border/50 transition-all duration-300 hover:shadow-md ${item.checked ? "opacity-60" : ""}`}
     >
       <div className="flex items-center gap-4">
         <Checkbox
@@ -29,20 +30,32 @@ const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
           onCheckedChange={() => onToggle(item.id)}
           className="w-6 h-6 rounded-full border-2 data-[state=checked]:gradient-success"
         />
-        
+
         <div className="flex-1">
-          <h3 className={`font-semibold ${item.checked ? "line-through" : ""}`}>
-            {item.name}
-          </h3>
-          <p className="text-sm text-muted-foreground">{item.category}</p>
+          <h3 className={`font-semibold ${item.checked ? "line-through" : ""}`}>{item.name}</h3>
+          {item.category && <p className="text-sm text-muted-foreground">{item.category}</p>}
+          {item.supermarket && <p className="text-xs text-muted-foreground">Supermercado: {item.supermarket}</p>}
+          {item.expiryDate && <p className="text-xs text-muted-foreground">Validade: {new Date(item.expiryDate).toLocaleDateString('pt-BR')}</p>}
+          {item.isRecurring && <p className="text-xs text-muted-foreground">Recorrente</p>}
         </div>
 
         <div className="text-right flex-shrink-0">
+          {/* allowedUnits: unidade, caixa, pacote */}
           <p className="font-semibold">
-            R$ {(item.price * item.quantity).toFixed(2)}
+            {(() => {
+              const allowedUnits = ["unidade", "caixa", "pacote"];
+              const price = Number(item.price) || 0;
+              const quantity = item.quantity ?? 1;
+              const unit = item.unit ? String(item.unit).toLowerCase() : "";
+              if (allowedUnits.includes(unit)) {
+                return `R$ ${(price * quantity).toFixed(2)}`;
+              } else {
+                return `R$ ${price.toFixed(2)}`;
+              }
+            })()}
           </p>
           <p className="text-sm text-muted-foreground">
-            {item.quantity}{item.unit} x R$ {item.price.toFixed(2)}
+            {item.quantity ?? 1}{item.unit ?? ""} x R$ {item.price !== undefined ? Number(item.price).toFixed(2) : "-"}
           </p>
         </div>
 
