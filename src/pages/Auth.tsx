@@ -7,62 +7,32 @@ import { Card } from "@/components/ui/card";
 import { ShoppingCart, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
-import BottomNavigation from "@/components/BottomNavigation";
-
-interface User {
-  name: string;
-  email: string;
-  password: string;
-}
+import { auth, googleProvider } from "@/firebase";
+import { signInWithPopup } from "firebase/auth";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (isLogin) {
-      const storedUsers = localStorage.getItem("app-users");
-      const users = storedUsers ? (JSON.parse(storedUsers) as User[]) : [];
-      const user = users.find((u) => u.email === email && u.password === password);
-
-      if (user) {
-        localStorage.setItem("current-user", JSON.stringify({ name: user.name, email: user.email }));
-        toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
-      } else {
-        toast.error("Email ou senha incorretos");
-      }
-    } else {
-      if (!name || !email || !password) {
-        toast.error("Por favor, preencha todos os campos");
-        return;
-      }
-
-      const storedUsers = localStorage.getItem("app-users");
-      const users = storedUsers ? (JSON.parse(storedUsers) as User[]) : [];
-
-      if (users.find((u) => u.email === email)) {
-        toast.error("Email já cadastrado");
-        return;
-      }
-
-      users.push({ name, email, password });
-      localStorage.setItem("app-users", JSON.stringify(users));
-      localStorage.setItem("current-user", JSON.stringify({ name, email }));
-
-      toast.success("Cadastro realizado com sucesso!");
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      console.log("Google sign in successful, user:", user);
+      toast.success(`Bem-vindo, ${user.displayName}!`);
       navigate("/dashboard");
+    } catch (error) {
+      console.error("Error during Google sign in:", error);
+      toast.error("Erro ao fazer login com o Google");
     }
   };
 
-  const handleGuestAccess = () => {
-    localStorage.setItem("guest-mode", "true");
-    toast.success("Acesso como convidado");
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Logic for email/password auth
+    // For now, let's just navigate to dashboard on any submission
     navigate("/dashboard");
   };
 
@@ -85,21 +55,6 @@ const Auth = () => {
 
         <Card className="glass border-none shadow-lg p-5 sm:p-8 animate-scale-in rounded-xl sm:rounded-2xl">
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            {!isLogin && (
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="name" className="text-sm">Nome</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Seu nome"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="glass border-border/50 h-10 sm:h-11 text-sm"
-                  required={!isLogin}
-                />
-              </div>
-            )}
-
             <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="email" className="text-sm">E-mail</Label>
               <Input
@@ -126,8 +81,8 @@ const Auth = () => {
               />
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full gradient-primary border-none shadow-glow hover:shadow-lg transition-all duration-300 h-10 sm:h-11 text-sm sm:text-base"
             >
               {isLogin ? "Entrar" : "Criar conta"}
@@ -147,11 +102,11 @@ const Auth = () => {
 
             <Button
               type="button"
-              onClick={handleGuestAccess}
+              onClick={handleGoogleSignIn}
               variant="outline"
               className="w-full glass border-border/50 hover:bg-primary/5 h-10 sm:h-11 text-sm sm:text-base"
             >
-              Entrar como convidado
+              Entrar com o Google
             </Button>
 
             <div className="text-center">
@@ -169,9 +124,6 @@ const Auth = () => {
           </div>
         </Card>
       </div>
-
-      {/* Bottom Navigation
-      <BottomNavigation /> */}
     </div>
   );
 };

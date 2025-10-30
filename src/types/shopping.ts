@@ -17,5 +17,6 @@ export interface ShoppingList {
   observation: string;
   date: string;
   plannedBudget?: number;
-  items: ShoppingItem[];
+  ownerId: string;
+  members: string[];
 }

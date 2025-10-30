@@ -1,17 +1,46 @@
+import { useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Lists from "./pages/Lists";
-import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics";
-import NotFound from "./pages/NotFound";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/firebase";
+
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import Lists from "@/pages/Lists";
+import Dashboard from "@/pages/Dashboard";
+import Analytics from "@/pages/Analytics";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Layout para rotas autenticadas
+const ProtectedLayout = () => {
+  const [user, loading] = useAuthState(auth);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      // Armazena a rota que o usuário tentou acessar para redirecioná-lo após o login
+      navigate("/auth", { state: { from: location } });
+    } 
+  }, [user, loading, navigate, location]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  // Se o usuário estiver autenticado, renderiza o conteúdo da rota filha
+  return user ? <Outlet /> : null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -19,17 +48,19 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<Index />} />
+
+          {/* Rotas Protegidas */}
+          <Route element={<ProtectedLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lists" element={<Lists />} />
             <Route path="/analytics" element={<Analytics />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+          </Route>
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
