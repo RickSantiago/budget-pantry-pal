@@ -6,6 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ShoppingCart, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import AppHeader from "@/components/AppHeader";
+import BottomNavigation from "@/components/BottomNavigation";
+
+interface User {
+  name: string;
+  email: string;
+  password: string;
+}
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,13 +24,12 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (isLogin) {
-      // Check if user exists in localStorage
       const storedUsers = localStorage.getItem("app-users");
-      const users = storedUsers ? JSON.parse(storedUsers) : [];
-      const user = users.find((u: any) => u.email === email && u.password === password);
-      
+      const users = storedUsers ? (JSON.parse(storedUsers) as User[]) : [];
+      const user = users.find((u) => u.email === email && u.password === password);
+
       if (user) {
         localStorage.setItem("current-user", JSON.stringify({ name: user.name, email: user.email }));
         toast.success("Login realizado com sucesso!");
@@ -35,21 +42,19 @@ const Auth = () => {
         toast.error("Por favor, preencha todos os campos");
         return;
       }
-      
-      // Save new user to localStorage
+
       const storedUsers = localStorage.getItem("app-users");
-      const users = storedUsers ? JSON.parse(storedUsers) : [];
-      
-      // Check if user already exists
-      if (users.find((u: any) => u.email === email)) {
+      const users = storedUsers ? (JSON.parse(storedUsers) as User[]) : [];
+
+      if (users.find((u) => u.email === email)) {
         toast.error("Email já cadastrado");
         return;
       }
-      
+
       users.push({ name, email, password });
       localStorage.setItem("app-users", JSON.stringify(users));
       localStorage.setItem("current-user", JSON.stringify({ name, email }));
-      
+
       toast.success("Cadastro realizado com sucesso!");
       navigate("/dashboard");
     }
@@ -62,8 +67,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4 bg-gradient-to-br from-primary/10 via-background to-accent/10">
-      <div className="w-full max-w-md animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 pb-24">
+      <AppHeader title="Lista Inteligente" hideThemeToggle />
+
+      <div className="w-full max-w-md mx-auto animate-fade-in py-8">
         <div className="text-center mb-6 sm:mb-8 animate-slide-up">
           <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full gradient-primary mb-3 sm:mb-4 shadow-glow">
             <ShoppingCart className="w-7 h-7 sm:w-8 sm:h-8 text-primary-foreground" />
@@ -162,6 +169,9 @@ const Auth = () => {
           </div>
         </Card>
       </div>
+
+      {/* Bottom Navigation
+      <BottomNavigation /> */}
     </div>
   );
 };

@@ -14,8 +14,8 @@ const ListsOverview = ({ lists, onSelectList, onCreateNew }: ListsOverviewProps)
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24 px-3 sm:px-4 pt-4 sm:pt-6">
       <div className="max-w-2xl mx-auto">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Minhas Listas</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Gerenciador de listas de compras</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Listas de compras</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Gerencie todas as suas listas de compras</p>
         </div>
 
         <Button 
@@ -56,8 +56,8 @@ const ListsOverview = ({ lists, onSelectList, onCreateNew }: ListsOverviewProps)
                       </span>
                     </div>
                     <div className="mt-1.5 sm:mt-2">
-                      <p className="text-base sm:text-lg font-bold gradient-primary bg-clip-text text-transparent">
-                        R$ {totalPrice.toFixed(2)}
+                      <p className="text-base sm:text-md font-bold bg-clip-text">
+                        Gasto atual: R$ {totalPrice.toFixed(2)}
                       </p>
                     </div>
                   </div>

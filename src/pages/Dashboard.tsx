@@ -1,11 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { 
-  ShoppingCart, 
-  CheckCircle, 
-  Wallet, 
+import AppHeader from "@/components/AppHeader";
+import {
+  ShoppingCart,
+  CheckCircle,
+  Wallet,
   AlertTriangle,
   List,
   PlusCircle,
@@ -15,11 +15,12 @@ import {
   ShoppingBag,
   Bell,
   Settings,
-  Home
+  Home,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ShoppingList } from "@/types/shopping";
+import BottomNavigation from "@/components/BottomNavigation";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -38,9 +39,15 @@ const Dashboard = () => {
   }, []);
 
   const totalItems = currentList?.items.length || 0;
-  const purchasedItems = currentList?.items.filter(item => item.checked).length || 0;
-  const purchasedPercentage = totalItems > 0 ? Math.round((purchasedItems / totalItems) * 100) : 0;
-  const totalPrice = currentList?.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+  const purchasedItems =
+    currentList?.items.filter((item) => item.checked).length || 0;
+  const purchasedPercentage =
+    totalItems > 0 ? Math.round((purchasedItems / totalItems) * 100) : 0;
+  const totalPrice =
+    currentList?.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    ) || 0;
   const expiringItems = 3; // Mock data
 
   const summaryCards = [
@@ -49,35 +56,35 @@ const Dashboard = () => {
       title: "Itens Totais",
       value: totalItems,
       color: "text-green-500",
-      bgColor: "bg-green-500/10"
+      bgColor: "bg-green-500/10",
     },
     {
       icon: CheckCircle,
       title: "Itens Comprados",
       value: `${purchasedItems} (${purchasedPercentage}%)`,
       color: "text-blue-500",
-      bgColor: "bg-blue-500/10"
+      bgColor: "bg-blue-500/10",
     },
     {
       icon: Wallet,
       title: "Gasto Estimado",
       value: `R$ ${totalPrice.toFixed(2)}`,
       color: "text-amber-500",
-      bgColor: "bg-amber-500/10"
+      bgColor: "bg-amber-500/10",
     },
     {
       icon: AlertTriangle,
       title: "Próximos do Vencimento",
       value: expiringItems,
       color: "text-red-500",
-      bgColor: "bg-red-500/10"
-    }
+      bgColor: "bg-red-500/10",
+    },
   ];
 
   const alerts = [
     "🧃 O leite vence em 2 dias.",
     "🍚 O arroz está 10% mais caro no SuperX.",
-    "💸 Você atingiu 80% do orçamento mensal."
+    "💸 Você atingiu 80% do orçamento mensal.",
   ];
 
   const suggestions = ["Arroz", "Sabão Líquido", "Iogurte"];
@@ -86,61 +93,57 @@ const Dashboard = () => {
     { icon: ShoppingBag, text: "Ver Lista", action: () => navigate("/lists") },
     { icon: Plus, text: "Novo Item", action: () => navigate("/lists") },
     { icon: BarChart, text: "Ver Análises", action: () => {} },
-    { icon: Bell, text: "Notificações", action: () => {} }
+    { icon: Bell, text: "Notificações", action: () => {} },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
-      {/* Header */}
-      <div className="glass border-b border-border/50 sticky top-0 z-10 backdrop-blur-lg">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
-                Lista Inteligente
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">
-                {currentList?.title || "Nenhuma lista"}
-              </p>
-            </div>
-            <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
-              <ThemeToggle />
-              <Button 
-                variant="outline" 
-                size="icon"
-                className="glass rounded-full h-9 w-9 sm:h-10 sm:w-10"
-                onClick={() => navigate("/lists")}
-              >
-                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                className="glass rounded-full h-9 w-9 sm:h-10 sm:w-10"
-              >
-                <User className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AppHeader
+        title="Lista Inteligente"
+        subtitle={currentList?.title || "Nenhuma lista"}
+        rightNode={
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="glass rounded-full h-9 w-9 sm:h-10 sm:w-10"
+              onClick={() => navigate("/lists")}
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="glass rounded-full h-9 w-9 sm:h-10 sm:w-10"
+            >
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
+          </>
+        }
+      />
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 animate-fade-in">
           {summaryCards.map((card, index) => (
-            <Card 
+            <Card
               key={index}
               className="glass border-border/50 p-3 sm:p-4 hover:shadow-lg transition-all duration-300 animate-slide-up rounded-xl sm:rounded-2xl"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className="flex flex-col items-center text-center space-y-1.5 sm:space-y-2">
                 <div className={`${card.bgColor} p-2 sm:p-3 rounded-full`}>
-                  <card.icon className={`w-4 h-4 sm:w-6 sm:h-6 ${card.color}`} />
+                  <card.icon
+                    className={`w-4 h-4 sm:w-6 sm:h-6 ${card.color}`}
+                  />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">{card.title}</p>
-                  <p className="text-sm sm:text-xl font-bold mt-0.5 sm:mt-1">{card.value}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
+                    {card.title}
+                  </p>
+                  <p className="text-sm sm:text-xl font-bold mt-0.5 sm:mt-1">
+                    {card.value}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -163,8 +166,8 @@ const Dashboard = () => {
                 <Progress value={purchasedPercentage} className="h-2" />
               </div>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="glass rounded-full text-xs"
                   onClick={() => navigate("/lists")}
@@ -172,8 +175,8 @@ const Dashboard = () => {
                   <List className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                   Ver Lista
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="glass rounded-full text-xs"
                   onClick={() => navigate("/lists")}
@@ -181,8 +184,8 @@ const Dashboard = () => {
                   <PlusCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                   Adicionar
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="glass rounded-full text-xs"
                 >
@@ -204,7 +207,7 @@ const Dashboard = () => {
             </h2>
             <div className="space-y-2 sm:space-y-3">
               {alerts.map((alert, index) => (
-                <div 
+                <div
                   key={index}
                   className="glass border border-border/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-xs sm:text-sm hover:shadow-md transition-all"
                 >
@@ -218,14 +221,14 @@ const Dashboard = () => {
           <Card className="glass border-border/50 p-4 sm:p-6 animate-slide-up rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
               <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              Sugestões IA
+              Sugestões de compras
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-              Baseado no histórico:
+              Baseado no histórico ou itens recorrentes:
             </p>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {suggestions.map((item, index) => (
-                <Button 
+                <Button
                   key={index}
                   variant="outline"
                   size="sm"
@@ -240,7 +243,9 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
-          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Ações Rápidas</h2>
+          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+            Ações Rápidas
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             {quickActions.map((action, index) => (
               <Button
@@ -257,7 +262,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Intelligence Tip */}
-        <Card className="glass border-border/50 p-4 sm:p-6 gradient-primary animate-fade-in rounded-xl sm:rounded-2xl">
+        <Card className="glass p-4 sm:p-6 gradient-primary animate-fade-in rounded-xl sm:rounded-2xl">
           <p className="text-primary-foreground font-medium text-center text-xs sm:text-base">
             💡 Você gastou 15% menos em carnes neste mês comparado a setembro.
           </p>
@@ -265,29 +270,7 @@ const Dashboard = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 z-20">
-        <Card className="glass border-border/50 shadow-glow rounded-2xl sm:rounded-3xl overflow-hidden">
-          <div className="flex items-center justify-around p-1.5 sm:p-2">
-            {[
-              { icon: BarChart, text: "Gráficos", path: "/analytics" },
-              { icon: ShoppingCart, text: "Lista", path: "/lists" },
-              { icon: Home, text: "Home", path: "/dashboard" },
-              { icon: Bell, text: "Avisos", path: "/dashboard" },
-              { icon: Settings, text: "Config", path: "/dashboard" }
-            ].map((item, index) => (
-              <Button
-                key={index}
-                variant="ghost"
-                className="flex-col h-auto py-1.5 sm:py-2 px-2 sm:px-4 gap-0.5 sm:gap-1 rounded-xl sm:rounded-2xl hover:bg-primary/10"
-                onClick={() => navigate(item.path)}
-              >
-                <item.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-[10px] sm:text-xs">{item.text}</span>
-              </Button>
-            ))}
-          </div>
-        </Card>
-      </div>
+      <BottomNavigation />
     </div>
   );
 };

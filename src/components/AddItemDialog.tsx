@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useSupermarkets } from "@/hooks/useSupermarkets";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ShoppingItem } from "@/types/shopping";
 
 const categories = [
   "Grãos e Cereais",
@@ -26,7 +27,8 @@ const categories = [
 interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddItem: (item: any) => void;
+  // item does not include id and checked which are added by the caller
+  onAddItem: (item: Omit<ShoppingItem, "id" | "checked">) => void;
   listTitle?: string;
 }
 
@@ -51,7 +53,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
     } else {
       setShowSuggestions(false);
     }
-  }, [supermarket]);
+  }, [supermarket, searchSupermarkets]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
