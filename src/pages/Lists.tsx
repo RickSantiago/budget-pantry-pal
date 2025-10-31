@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import {
   collection,
   query,
@@ -14,7 +14,6 @@ import {
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/firebase';
 import { toast } from 'sonner';
 import {
   Plus,

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { db } from '../firebase'; // Assuming firebase.ts is in the src directory
+import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 const SUPERMARKETS_COLLECTION = 'supermarkets';

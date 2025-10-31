@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ShoppingCart, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
-import { auth, googleProvider } from "@/firebase";
+import { auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 

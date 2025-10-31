@@ -1,5 +1,6 @@
 import { initializeApp, getApps, type FirebaseOptions, type FirebaseApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Read config from Vite env vars (VITE_FIREBASE_*)
 const firebaseConfig = {
@@ -21,4 +22,6 @@ if (!getApps().length) {
 }
 
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 export default app;
