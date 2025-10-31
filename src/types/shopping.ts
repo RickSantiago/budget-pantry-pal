@@ -14,9 +14,16 @@ export interface ShoppingItem {
 export interface ShoppingList {
   id: string;
   title: string;
-  observation: string;
-  date: string;
+  observation?: string;
+  date?: string;
   plannedBudget?: number;
-  ownerId: string;
-  members: string[];
+  // backward-compatible owner fields — some files used `owner` and others `ownerId`
+  owner?: string;
+  ownerId?: string;
+  // collaborators
+  sharedWith?: string[];
+  members?: string[];
+  // optional convenience: some components may render a list of items embedded
+  items?: ShoppingItem[];
+  createdAt?: string;
 }

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { db } from '@/lib/firebase';
 import {
   collection,
   query,
@@ -13,6 +13,9 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/firebase';
+import { toast } from 'sonner';
 import {
   Plus,
   Settings,
@@ -30,6 +33,7 @@ import AddItemDialog from '@/components/AddItemDialog';
 import EditItemDialog from '@/components/EditItemDialog';
 import CreateListDialog from '@/components/CreateListDialog';
 import ListsOverview from '@/components/ListsOverview';
+import ShareListDialog from '@/components/ShareListDialog';
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -46,6 +50,11 @@ const Lists = () => {
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
   const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [selectedListForShare, setSelectedListForShare] = useState<string | null>(null);
+  const [sessionInput, setSessionInput] = useState('');
+  const [sharedSessionId, setSharedSessionId] = useState<string | null>(null);
+  const [user] = useAuthState(auth);
   const [sortAZ, setSortAZ] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
   const [showBudgetAlert, setShowBudgetAlert] = useState(true);
@@ -58,10 +67,19 @@ const Lists = () => {
       querySnapshot.forEach(doc => {
         listsData.push({ ...doc.data(), id: doc.id } as ShoppingList);
       });
-      setLists(listsData);
+      // If user is present, show only lists owned by or shared with the user
+      let visible = listsData;
+      if (user) {
+        visible = listsData.filter(l =>
+          (l.owner === user.uid) || (l.ownerId === user.uid) ||
+          (Array.isArray(l.sharedWith) && l.sharedWith.includes(user.uid)) ||
+          (Array.isArray(l.members) && l.members.includes(user.uid))
+        );
+      }
+      setLists(visible);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   // Fetch items for the current list from Firestore
   useEffect(() => {
@@ -85,7 +103,15 @@ const Lists = () => {
   const currentList = lists.find(list => list.id === currentListId);
 
   const handleCreateList = async (listData: { title: string; observation: string; date: string; plannedBudget?: number }) => {
-    const newListRef = await addDoc(collection(db, 'lists'), listData);
+    const payload = {
+      ...listData,
+      owner: user ? user.uid : undefined,
+      ownerId: user ? user.uid : undefined,
+      sharedWith: [],
+      members: [],
+      createdAt: new Date().toISOString(),
+    };
+    const newListRef = await addDoc(collection(db, 'lists'), payload);
     setCurrentListId(newListRef.id);
   };
 
@@ -238,6 +264,21 @@ const Lists = () => {
             </div>
             <div className='flex gap-1 sm:gap-2 flex-shrink-0'>
               <ThemeToggle />
+              {/* Share / Session controls */}
+              <div className='hidden md:flex items-center gap-2'>
+                <input type='text' placeholder='Session ID' value={sessionInput} onChange={e => setSessionInput(e.target.value)} className='glass border-border/50 rounded px-2 py-1 text-xs w-36' />
+                <Button variant='outline' size='sm' onClick={() => {
+                  if (!sessionInput) return toast.error('Cole um Session ID para entrar');
+                  // set current list to the provided session ID (join)
+                  setCurrentListId(sessionInput);
+                  toast.success('Entrando na sessão...');
+                }}>Entrar</Button>
+                <Button variant='ghost' size='sm' onClick={() => {
+                  if (!currentListId) return toast.error('Abra uma lista antes de compartilhar');
+                  setSelectedListForShare(currentListId);
+                  setIsShareDialogOpen(true);
+                }}>Compartilhar</Button>
+              </div>
               <Button variant='ghost' size='icon' className='rounded-full h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex'>
                 <Bell className='w-4 h-4 sm:w-5 sm:h-5' />
               </Button>
@@ -407,6 +448,12 @@ const Lists = () => {
         onEditItem={handleEditItem}
         item={editingItem}
         listTitle={currentList.title}
+      />
+
+      <ShareListDialog
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        listId={selectedListForShare}
       />
     </div>
   );

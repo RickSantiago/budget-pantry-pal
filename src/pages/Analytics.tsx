@@ -32,6 +32,7 @@ const Analytics = () => {
       const parsedLists = JSON.parse(stored);
       setLists(parsedLists);
       const today = new Date();
+      // eslint-disable-next-line prefer-const
       let expiring: (ShoppingItem & { checked: boolean })[] = [];
       let allExpiring: (ShoppingItem & { checked: boolean })[] = [];
       parsedLists.forEach(list => {
