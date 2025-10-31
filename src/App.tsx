@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,8 +14,6 @@ import Lists from "@/pages/Lists";
 import Dashboard from "@/pages/Dashboard";
 import Analytics from "@/pages/Analytics";
 import NotFound from "@/pages/NotFound";
-
-const queryClient = new QueryClient();
 
 // Layout para rotas autenticadas
 const ProtectedLayout = () => {
@@ -42,28 +40,32 @@ const ProtectedLayout = () => {
   return user ? <Outlet /> : null;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Index />} />
+const App = () => {
+  const [queryClient] = useState(() => new QueryClient());
 
-          {/* Rotas Protegidas */}
-          <Route element={<ProtectedLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/lists" element={<Lists />} />
-            <Route path="/analytics" element={<Analytics />} />
-          </Route>
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Index />} />
+
+            {/* Rotas Protegidas */}
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/lists" element={<Lists />} />
+              <Route path="/analytics" element={<Analytics />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
