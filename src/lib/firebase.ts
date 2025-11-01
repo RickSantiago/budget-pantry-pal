@@ -12,11 +12,20 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-console.log("Firebase Config:", firebaseConfig);
+// Validate Firebase configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error("Firebase configuration is incomplete. Please check your environment variables.");
+}
 
 let app: FirebaseApp;
 if (!getApps().length) {
-  app = initializeApp(firebaseConfig as FirebaseOptions);
+  try {
+    app = initializeApp(firebaseConfig as FirebaseOptions);
+    console.log("Firebase initialized successfully");
+  } catch (error) {
+    console.error("Error initializing Firebase:", error);
+    throw error;
+  }
 } else {
   app = getApps()[0] as FirebaseApp;
 }

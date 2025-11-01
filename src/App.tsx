@@ -23,7 +23,7 @@ const ProtectedLayout = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      // Armazena a rota que o usuÃ¡rio tentou acessar para redirecionÃ¡-lo apÃ³s o login
+      // Armazena a rota que o usuário tentou acessar para redirecioná-lo após o login
       navigate("/auth", { state: { from: location } });
     } 
   }, [user, loading, navigate, location]);
@@ -36,7 +36,7 @@ const ProtectedLayout = () => {
     );
   }
 
-  // Se o usuÃ¡rio estiver autenticado, renderiza o conteÃºdo da rota filha
+  // Se o usuário estiver autenticado, renderiza o conteúdo da rota filha
   return user ? <Outlet /> : null;
 };
 
