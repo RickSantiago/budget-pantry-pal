@@ -95,7 +95,18 @@ const Auth = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10">
+        <div className="text-center animate-fade-in">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gradient-primary mb-4 shadow-glow animate-pulse">
+            <ShoppingCart className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <p className="text-lg font-medium text-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 pb-24">
