@@ -8,7 +8,7 @@ import { ShoppingCart, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
 import { auth, googleProvider } from "@/lib/firebase";
-import { signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useEffect } from "react";
 
@@ -25,6 +25,25 @@ const Auth = () => {
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          toast.success(`Bem-vindo, ${result.user.displayName || result.user.email}!`);
+          navigate("/lists");
+        }
+      } catch (error: any) {
+        console.error("Error handling redirect result:", error);
+        if (error.code !== "auth/popup-closed-by-user") {
+          toast.error("Erro ao fazer login com o Google");
+        }
+      }
+    };
+
+    handleRedirectResult();
+  }, [navigate]);
+
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -33,7 +52,14 @@ const Auth = () => {
       navigate("/lists");
     } catch (error: any) {
       console.error("Error during Google sign in:", error);
-      const errorMessage = error.code === "auth/popup-closed-by-user" 
+
+      if (error.code === "auth/popup-blocked") {
+        toast.info("Popup bloqueado. Redirecionando...");
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
+      const errorMessage = error.code === "auth/popup-closed-by-user"
         ? "Login cancelado"
         : "Erro ao fazer login com o Google";
       toast.error(errorMessage);
