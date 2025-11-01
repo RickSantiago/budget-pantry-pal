@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow public access to the sharedLists collection for now
+    // TODO: Secure this before deploying to production
+    match /sharedLists/{listId} {
+      allow read, write: if true;
+    }
+  }
+}
