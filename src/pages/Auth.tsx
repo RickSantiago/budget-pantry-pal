@@ -8,8 +8,9 @@ import { ShoppingCart, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import AppHeader from "@/components/AppHeader";
 import { auth, googleProvider } from "@/lib/firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useEffect } from "react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,24 +19,80 @@ const Auth = () => {
   const [user, loading, authError] = useAuthState(auth);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (user && !loading) {
+      navigate("/lists");
+    }
+  }, [user, loading, navigate]);
+
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      console.log("Google sign in successful, user:", user);
       toast.success(`Bem-vindo, ${user.displayName || user.email}!`);
       navigate("/lists");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during Google sign in:", error);
-      toast.error("Erro ao fazer login com o Google");
+      const errorMessage = error.code === "auth/popup-closed-by-user" 
+        ? "Login cancelado"
+        : "Erro ao fazer login com o Google";
+      toast.error(errorMessage);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic for email/password auth
-    // For now, let's just navigate to dashboard on any submission
-    navigate("/dashboard");
+    
+    if (!email.trim() || !password.trim()) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+
+    try {
+      if (isLogin) {
+        // Login
+        await signInWithEmailAndPassword(auth, email, password);
+        toast.success("Login realizado com sucesso!");
+        navigate("/lists");
+      } else {
+        // Cadastro
+        await createUserWithEmailAndPassword(auth, email, password);
+        toast.success("Conta criada com sucesso!");
+        navigate("/lists");
+      }
+    } catch (error: any) {
+      console.error("Error during authentication:", error);
+      
+      let errorMessage = "Erro ao autenticar";
+      
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          errorMessage = "Este e-mail já está em uso";
+          break;
+        case "auth/invalid-email":
+          errorMessage = "E-mail inválido";
+          break;
+        case "auth/user-not-found":
+          errorMessage = "Usuário não encontrado";
+          break;
+        case "auth/wrong-password":
+          errorMessage = "Senha incorreta";
+          break;
+        case "auth/weak-password":
+          errorMessage = "Senha muito fraca";
+          break;
+        case "auth/invalid-credential":
+          errorMessage = "Credenciais inválidas";
+          break;
+      }
+      
+      toast.error(errorMessage);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
