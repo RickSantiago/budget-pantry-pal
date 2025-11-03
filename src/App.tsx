@@ -14,6 +14,7 @@ import Lists from "@/pages/Lists";
 import Dashboard from "@/pages/Dashboard";
 import Analytics from "@/pages/Analytics";
 import NotFound from "@/pages/NotFound";
+import SharedListView from "@/pages/SharedListView";
 
 // Layout para rotas autenticadas
 const ProtectedLayout = () => {
@@ -52,6 +53,9 @@ const App = () => {
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<Index />} />
+            
+            {/* Public Shared List Route */}
+            <Route path="/shared/:listId" element={<SharedListView />} />
 
             {/* Rotas Protegidas */}
             <Route element={<ProtectedLayout />}>

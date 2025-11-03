@@ -1,12 +1,12 @@
 
 import { useCallback, useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, doc, addDoc, setDoc, onSnapshot, getDoc, updateDoc, query, where } from "firebase/firestore";
 import { ShoppingList } from "@/types/shopping";
-import { useAuth } from "./useAuth";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 export function useSharedList() {
-  const { user } = useAuth();
+  const [user] = useAuthState(auth);
   const [sharedLists, setSharedLists] = useState<ShoppingList[]>([]);
 
   // Effect to listen for lists shared with the current user

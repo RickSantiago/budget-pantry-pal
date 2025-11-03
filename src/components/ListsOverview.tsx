@@ -21,7 +21,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList })
   // Safe access to properties with default fallbacks.
   const { title = "Lista sem título", items = [], date, plannedBudget, ownerId, sharedWith } = list;
   const totalItems = items.length;
-  const purchasedItems = items.filter(item => item.purchased).length;
+  const purchasedItems = items.filter(item => item.checked).length;
   
   const [showActions, setShowActions] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -49,7 +49,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList })
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-start">
           <p className="text-base sm:text-lg font-semibold leading-tight pr-10">{title}</p>
-          {isShared && <Users className="w-4 h-4 text-muted-foreground" title="Lista compartilhada" />}
+          {isShared && <div title="Lista compartilhada"><Users className="w-4 h-4 text-muted-foreground" /></div>}
         </div>
         <div className="flex items-center text-xs sm:text-sm text-muted-foreground gap-4">
           <div className="flex items-center gap-1.5" title="Itens">
@@ -108,9 +108,9 @@ const ListsOverview: React.FC<ListsOverviewProps> = ({ lists, onCreateList, onSe
       </div>
 
       <CreateListDialog 
-        isOpen={isNewListDialogOpen}
-        onClose={() => setIsNewListDialogOpen(false)}
-        onCreate={onCreateList}
+        open={isNewListDialogOpen}
+        onOpenChange={setIsNewListDialogOpen}
+        onCreateList={onCreateList}
       />
 
       {otherLists.length > 0 ? (

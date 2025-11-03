@@ -1,10 +1,60 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public access to the sharedLists collection for now
-    // TODO: Secure this before deploying to production
+    // Allow public access to the sharedLists collection
     match /sharedLists/{listId} {
       allow read, write: if true;
+    }
+    
+    // Lists collection rules
+    match /lists/{listId} {
+      // Allow read if list is public OR user is owner/collaborator
+      allow read: if resource.data.isPublic == true 
+                  || request.auth != null && (
+                    resource.data.ownerId == request.auth.uid 
+                    || resource.data.owner == request.auth.uid
+                    || request.auth.uid in resource.data.get('sharedWith', [])
+                    || request.auth.uid in resource.data.get('members', [])
+                  );
+      
+      // Only authenticated users can create lists
+      allow create: if request.auth != null;
+      
+      // Only owner can update/delete
+      allow update, delete: if request.auth != null && (
+        resource.data.ownerId == request.auth.uid 
+        || resource.data.owner == request.auth.uid
+      );
+      
+      // Items subcollection
+      match /items/{itemId} {
+        // Read access same as parent list
+        allow read: if get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true
+                    || request.auth != null && (
+                      get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid
+                      || get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
+                      || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', [])
+                      || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
+                    );
+        
+        // Allow anyone to toggle checked status on public lists (limited update)
+        allow update: if get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['checked'])
+                      || request.auth != null && (
+                        get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid
+                        || get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
+                        || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', [])
+                        || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
+                      );
+        
+        // Only authenticated users who own or collaborate on the list can create/delete items
+        allow create, delete: if request.auth != null && (
+          get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
+          || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', [])
+          || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
+        );
+      }
     }
   }
 }
