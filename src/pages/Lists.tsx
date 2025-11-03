@@ -186,9 +186,8 @@ const Lists = () => {
           <ListsOverview
             lists={lists}
             onSelectList={setCurrentListId}
-            onCreateList={handleCreateList}
+            onCreateNew={() => setIsCreateListDialogOpen(true)}
             onDeleteList={handleDeleteList}
-            currentListId={currentListId}
           />
           <CreateListDialog
             open={isCreateListDialogOpen}

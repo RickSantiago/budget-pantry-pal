@@ -23,8 +23,6 @@ export interface ShoppingList {
   // collaborators
   sharedWith?: string[];
   members?: string[];
-  // public sharing
-  isPublic?: boolean;
   // optional convenience: some components may render a list of items embedded
   items?: ShoppingItem[];
   createdAt?: string;
