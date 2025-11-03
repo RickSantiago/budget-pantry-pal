@@ -1,114 +1,131 @@
-// Card de lista com swipe/hover para mostrar ações
-const ListCard = ({ list, onSelectList, onDeleteList }) => {
-  const totalItems = list.items.length;
-  const checkedItems = list.items.filter(item => item.checked).length;
-  const allowedUnits = ["unidade", "caixa", "pacote"];
-  const totalPrice = list.items.reduce((sum, item) => {
-    const price = Number(item.price) || 0;
-    const unit = item.unit ? String(item.unit).toLowerCase() : "";
-    if (allowedUnits.includes(unit)) {
-      return sum + price * item.quantity;
-    } else {
-      return sum + price;
-    }
-  }, 0);
-  const [showActions, setShowActions] = useState(false);
-  const touchStartX = useRef(null);
-  const touchEndX = useRef(null);
-  function handleTouchStart(e) {
-    touchStartX.current = e.changedTouches[0].clientX;
+
+import { ShoppingList } from "@/types/shopping";
+import { Card } from "@/components/ui/card";
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, Calendar, ShoppingCart, X, PlusCircle, Users } from "lucide-react";
+import CreateListDialog from "./CreateListDialog";
+
+interface ListCardProps {
+  list: ShoppingList;
+  onSelectList: (id: string) => void;
+  onDeleteList: (id: string) => void;
+}
+
+const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList }) => {
+  // FINAL DEFENSE: If list is somehow null or undefined, render nothing.
+  if (!list) {
+    return null;
   }
-  function handleTouchEnd(e) {
-    touchEndX.current = e.changedTouches[0].clientX;
-    if (touchStartX.current !== null && touchEndX.current !== null) {
-      if (touchStartX.current - touchEndX.current > 60) {
-        setShowActions(true);
-      } else {
+
+  // Safe access to properties with default fallbacks.
+  const { title = "Lista sem título", items = [], date, plannedBudget, ownerId, sharedWith } = list;
+  const totalItems = items.length;
+  const purchasedItems = items.filter(item => item.checked).length;
+  
+  const [showActions, setShowActions] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const isShared = sharedWith && sharedWith.length > 0;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
         setShowActions(false);
       }
-    }
-  }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [cardRef]);
+
   return (
-    <Card
-      key={list.id}
-      className={`glass border-border/50 p-3 sm:p-4 flex cursor-pointer hover:shadow-lg transition-all duration-300 animate-slide-up rounded-xl sm:rounded-2xl relative group`}
-      style={{ animationDelay: `0ms` }}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+    <Card 
+      ref={cardRef} 
+      className="p-3 sm:p-4 rounded-lg relative overflow-hidden cursor-pointer hover:bg-muted/50"
+      onClick={() => setShowActions(!showActions)}
     >
-      <div className="flex-1 min-w-0" onClick={() => onSelectList(list.id)}>
-        <h3 className="font-semibold text-base sm:text-lg mb-0.5 sm:mb-1 truncate">{list.title}</h3>
-        {list.observation && (
-          <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2 truncate">{list.observation}</p>
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between items-start">
+          <p className="text-base sm:text-lg font-semibold leading-tight pr-10">{title}</p>
+          {isShared && <div title="Lista compartilhada"><Users className="w-4 h-4 text-muted-foreground" /></div>}
+        </div>
+        <div className="flex items-center text-xs sm:text-sm text-muted-foreground gap-4">
+          <div className="flex items-center gap-1.5" title="Itens">
+            <ShoppingCart className="w-3.5 h-3.5" />
+            <span>{purchasedItems} / {totalItems}</span>
+          </div>
+          {date && (
+            <div className="flex items-center gap-1.5" title="Data">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{new Date(date).toLocaleDateString()}</span>
+            </div>
+          )}
+        </div>
+        {plannedBudget && (
+          <div className="text-xs sm:text-sm text-green-600 font-medium">
+            Orçamento: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plannedBudget)}
+          </div>
         )}
-        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="font-semibold">Data da compra:</span>
-            <span>{new Date(list.date).toLocaleDateString('pt-BR')}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-            {checkedItems}/{totalItems}
-          </span>
-        </div>
-        <div className="mt-1.5 sm:mt-2">
-          <p className="text-base sm:text-md font-bold bg-clip-text">
-            Gasto atual: R$ {totalPrice.toFixed(2)}
-          </p>
-        </div>
       </div>
-      {/* Ações: editar/excluir, animadas */}
       <div
         className={`absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 items-end transition-all duration-300 ${showActions ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
-        <Button variant="outline" size="icon" onClick={() => onSelectList(list.id)} title="Abrir">
+        <Button variant="outline" size="icon" onClick={(e) => { e.stopPropagation(); onSelectList(list.id); }} title="Abrir">
           <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
         </Button>
-        <Button variant="destructive" size="icon" onClick={() => onDeleteList(list.id)} title="Excluir lista">
+        <Button variant="destructive" size="icon" onClick={(e) => { e.stopPropagation(); onDeleteList(list.id); }} title="Excluir lista">
           <X className="w-4 h-4" />
         </Button>
       </div>
     </Card>
   );
 };
-import { ShoppingList } from "@/types/shopping";
-import { Card } from "@/components/ui/card";
-import React, { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, Calendar, ShoppingCart, X } from "lucide-react";
+
 
 interface ListsOverviewProps {
   lists: ShoppingList[];
-  onSelectList: (listId: string) => void;
-  onCreateNew: () => void;
-  onDeleteList: (listId: string) => void;
+  onCreateList: (listData: { title: string; observation: string; date: string; plannedBudget?: number }) => void;
+  onSelectList: (id:string) => void;
+  onDeleteList: (id: string) => void;
+  currentListId: string | null;
 }
 
-const ListsOverview = ({ lists, onSelectList, onCreateNew, onDeleteList }: ListsOverviewProps) => {
+const ListsOverview: React.FC<ListsOverviewProps> = ({ lists, onCreateList, onSelectList, onDeleteList, currentListId }) => {
+  const [isNewListDialogOpen, setIsNewListDialogOpen] = useState(false);
+
+  // Filter out the currently selected list from the overview
+  const otherLists = lists.filter(list => list && list.id !== currentListId);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24 px-3 sm:px-4 pt-4 sm:pt-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Listas de compras</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Gerencie todas as suas listas de compras</p>
-        </div>
-
-        <Button 
-          onClick={onCreateNew}
-          className="w-full mb-4 sm:mb-6 gradient-primary shadow-glow hover:shadow-xl transition-all duration-300 h-11 sm:h-12 text-sm sm:text-base rounded-xl sm:rounded-2xl"
-        >
-          + Nova Lista
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Minhas Listas</h1>
+        <Button onClick={() => setIsNewListDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Nova Lista
         </Button>
+      </div>
 
+      <CreateListDialog 
+        open={isNewListDialogOpen}
+        onOpenChange={setIsNewListDialogOpen}
+        onCreateList={onCreateList}
+      />
+
+      {otherLists.length > 0 ? (
         <div className="space-y-2 sm:space-y-3">
-          {lists.map((list) => (
-            <ListCard key={list.id} list={list} onSelectList={onSelectList} onDeleteList={onDeleteList} />
+          {otherLists.map((list) => (
+            // Add a guard here as well, just in case.
+            list && <ListCard key={list.id} list={list} onSelectList={onSelectList} onDeleteList={onDeleteList} />
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="text-center py-10 px-4 border-2 border-dashed rounded-lg">
+          <p className="text-muted-foreground">Você ainda não tem outras listas.</p>
+          <p className="text-sm text-muted-foreground">Clique em "Nova Lista" para começar.</p>
+        </div>
+      )}
     </div>
   );
 };

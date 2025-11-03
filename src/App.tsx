@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -14,6 +13,7 @@ import Lists from "@/pages/Lists";
 import Dashboard from "@/pages/Dashboard";
 import Analytics from "@/pages/Analytics";
 import NotFound from "@/pages/NotFound";
+import SharedListView from "@/pages/SharedListView";
 
 // Layout para rotas autenticadas
 const ProtectedLayout = () => {
@@ -46,23 +46,24 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<Index />} />
+        <Toaster />
+        <Sonner />
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<Index />} />
+          
+          {/* Public Shared List Route */}
+          <Route path="/shared/:listId" element={<SharedListView />} />
 
-            {/* Rotas Protegidas */}
-            <Route element={<ProtectedLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/lists" element={<Lists />} />
-              <Route path="/analytics" element={<Analytics />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
+          {/* Rotas Protegidas */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/lists" element={<Lists />} />
+            <Route path="/analytics" element={<Analytics />} />
+          </Route>
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </ThemeProvider>
     </QueryClientProvider>
   );
