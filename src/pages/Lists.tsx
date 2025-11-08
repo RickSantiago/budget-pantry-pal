@@ -18,12 +18,11 @@ import { toast } from 'sonner';
 import {
   Plus,
   Settings,
-  Bell,
-  BarChart3,
   ArrowLeft,
   User,
   X,
   AlertTriangle,
+  Users,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -51,8 +50,6 @@ const Lists = () => {
   const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedListForShare, setSelectedListForShare] = useState<string | null>(null);
-  const [sessionInput, setSessionInput] = useState('');
-  const [sharedSessionId, setSharedSessionId] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const [sortAZ, setSortAZ] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
@@ -188,6 +185,10 @@ const Lists = () => {
             onSelectList={setCurrentListId}
             onCreateList={handleCreateList}
             onDeleteList={handleDeleteList}
+            onEditList={(id) => {
+              setCurrentListId(id);
+              setIsEditListDialogOpen(true);
+            }}
             currentListId={currentListId}
           />
           <CreateListDialog
@@ -234,60 +235,49 @@ const Lists = () => {
   return (
     <div className='min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24'>
       <div className='glass sticky top-0 z-10 border-b border-border/50 backdrop-blur-lg'>
-        <div className='max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6'>
-            <div className='flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4'>
+        <div className='max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-5'>
+          <div className='flex items-start justify-between gap-3 mb-4'>
+            <div className='flex items-center gap-2 sm:gap-3 flex-1 min-w-0'>
               <Button
                 variant='ghost'
                 size='icon'
-                className='rounded-full h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0'
+                className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 hover:border-primary/30'
                 onClick={() => setCurrentListId(null)}
               >
                 <ArrowLeft className='w-4 h-4 sm:w-5 sm:h-5' />
               </Button>
+              <div className='flex-1 min-w-0'>
+                <h1 className='text-xl sm:text-2xl font-bold truncate mb-0.5'>{currentList.title}</h1>
+                {currentList.observation && (
+                  <p className='text-xs sm:text-sm text-muted-foreground truncate'>{currentList.observation}</p>
+                )}
+              </div>
+            </div>
+
+            <div className='flex gap-2 flex-shrink-0'>
               <Button
                 variant='outline'
                 size='icon'
-                className='rounded-full h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0'
+                className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10 hover:border-primary/30'
                 onClick={() => setIsEditListDialogOpen(true)}
                 title='Editar lista'
               >
                 <Settings className='w-4 h-4 sm:w-5 sm:h-5' />
               </Button>
-            <div className='flex-1 min-w-0'>
-              <h1 className='text-lg sm:text-2xl font-bold truncate'>{currentList.title}</h1>
-              {currentList.observation && (
-                <p className='text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate'>{currentList.observation}</p>
-              )}
-              <p className='text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1'>
-                {checkedItems} de {totalItems} itens
-              </p>
-            </div>
-            <div className='flex gap-1 sm:gap-2 flex-shrink-0'>
-              <ThemeToggle />
-              {/* Share / Session controls */}
-              <div className='hidden md:flex items-center gap-2'>
-                <input type='text' placeholder='Session ID' value={sessionInput} onChange={e => setSessionInput(e.target.value)} className='glass border-border/50 rounded px-2 py-1 text-xs w-36' />
-                <Button variant='outline' size='sm' onClick={() => {
-                  if (!sessionInput) return toast.error('Cole um Session ID para entrar');
-                  // set current list to the provided session ID (join)
-                  setCurrentListId(sessionInput);
-                  toast.success('Entrando na sessão...');
-                }}>Entrar</Button>
-                <Button variant='ghost' size='sm' onClick={() => {
+              <Button
+                variant='default'
+                size='icon'
+                className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10 shadow-glow hover:shadow-xl transition-all duration-300'
+                onClick={() => {
                   if (!currentListId) return toast.error('Abra uma lista antes de compartilhar');
                   setSelectedListForShare(currentListId);
                   setIsShareDialogOpen(true);
-                }}>Compartilhar</Button>
-              </div>
-              <Button variant='ghost' size='icon' className='rounded-full h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex'>
-                <Bell className='w-4 h-4 sm:w-5 sm:h-5' />
+                }}
+                title='Compartilhar lista'
+              >
+                <Users className='w-4 h-4 sm:w-5 sm:h-5' />
               </Button>
-              <Button variant='ghost' size='icon' className='rounded-full h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex'>
-                <BarChart3 className='w-4 h-4 sm:w-5 sm:h-5' />
-              </Button>
-              <Button variant='ghost' size='icon' className='rounded-full h-9 w-9 sm:h-10 sm:w-10 hidden md:flex'>
-                <Settings className='w-4 h-4 sm:w-5 sm:h-5' />
-              </Button>
+              <ThemeToggle />
             </div>
           </div>
 
@@ -304,8 +294,16 @@ const Lists = () => {
               }}
             />
           )}
+          <div className='space-y-3'>
+            <div className='flex items-center justify-between text-xs sm:text-sm text-muted-foreground'>
+              <span>{checkedItems} de {totalItems} itens marcados</span>
+              <span>{totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0}% completo</span>
+            </div>
+            <Progress value={totalItems > 0 ? (checkedItems / totalItems) * 100 : 0} className='h-2' />
+          </div>
+
           {isOverBudget && showBudgetAlert && (
-            <Alert className='glass border-destructive/50 bg-destructive/10 mb-4'>
+            <Alert className='glass border-destructive/50 bg-destructive/10 animate-fade-in'>
               <AlertTriangle className='h-4 w-4 text-destructive' />
               <AlertDescription className='flex items-center justify-between'>
                 <span className='text-sm'>
@@ -323,46 +321,35 @@ const Lists = () => {
             </Alert>
           )}
 
-          <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md space-y-3'>
-            <div className='flex justify-between items-center'>
-              <div>
-                <p className='text-xs sm:text-sm text-muted-foreground'>Gasto Atual</p>
-                <p className={`text-lg sm:text-2xl font-bold ${isOverBudget ? 'text-destructive' : 'text-primary'}`}>
-                  R$ {totalPrice.toFixed(2)}
-                </p>
-              </div>
-              {plannedBudget > 0 && (
-                <div className='text-right'>
-                  <p className='text-xs sm:text-sm text-muted-foreground'>Planejado</p>
-                  <p className='text-base sm:text-lg font-semibold'>
-                    R$ {plannedBudget.toFixed(2)}
-                  </p>
-                </div>
-              )}
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md'>
+              <p className='text-xs sm:text-sm text-muted-foreground mb-1'>Gasto Atual</p>
+              <p className={`text-xl sm:text-3xl font-bold ${isOverBudget ? 'text-destructive' : 'text-primary'}`}>
+                R$ {totalPrice.toFixed(2)}
+              </p>
+              <p className='text-[10px] sm:text-xs text-muted-foreground mt-1'>
+                Marcados: R$ {checkedItemsValue.toFixed(2)}
+              </p>
             </div>
 
             {plannedBudget > 0 && (
-              <div className='space-y-2'>
-                <div className='flex justify-between text-xs text-muted-foreground'>
-                  <span>Orçamento</span>
-                  <span>{budgetProgress.toFixed(0)}%</span>
+              <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md'>
+                <p className='text-xs sm:text-sm text-muted-foreground mb-1'>Planejado</p>
+                <p className='text-xl sm:text-3xl font-bold'>
+                  R$ {plannedBudget.toFixed(2)}
+                </p>
+                <div className='mt-2'>
+                  <div className='flex justify-between text-[10px] sm:text-xs text-muted-foreground mb-1'>
+                    <span>Orçamento</span>
+                    <span>{budgetProgress.toFixed(0)}%</span>
+                  </div>
+                  <Progress
+                    value={Math.min(budgetProgress, 100)}
+                    className={`h-1.5 ${isOverBudget ? '[&>div]:bg-destructive' : ''}`}
+                  />
                 </div>
-                <Progress
-                  value={Math.min(budgetProgress, 100)}
-                  className={`h-2 ${isOverBudget ? '[&>div]:bg-destructive' : ''}`}
-                />
               </div>
             )}
-
-            <div className='pt-2 border-t border-border/50'>
-              <div className='flex justify-between items-center'>
-                <p className='text-xs sm:text-sm text-muted-foreground'>Progresso de Itens</p>
-                <p className='text-base sm:text-lg font-semibold'>
-                  {totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0}%
-                </p>
-                <p className='text-xs sm:text-sm text-muted-foreground mt-1'>Valor dos itens marcados: R$ {checkedItemsValue.toFixed(2)}</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
