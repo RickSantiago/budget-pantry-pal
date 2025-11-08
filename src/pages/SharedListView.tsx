@@ -99,11 +99,6 @@ const SharedListView = () => {
     try {
       const itemRef = doc(db, 'lists', listId, 'items', itemId);
       await updateDoc(itemRef, { checked: !item.checked });
-
-      setItems(prev => prev.map(i =>
-        i.id === itemId ? { ...i, checked: !i.checked } : i
-      ));
-
       toast.success(item.checked ? 'Item desmarcado' : 'Item marcado');
     } catch (err) {
       console.error('Error toggling item:', err);
