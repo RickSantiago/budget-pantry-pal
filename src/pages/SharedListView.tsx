@@ -5,13 +5,31 @@ import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc } from 'firebase
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Check, Plus, AlertCircle, Repeat2, MapPin } from 'lucide-react';
+import { Info, Check, Plus, Repeat2, MapPin } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const categories = [
+  "Grãos e Cereais",
+  "Carnes",
+  "Hortifrúti",
+  "Laticínios",
+  "Padaria e Massas",
+  "Bebidas",
+  "Doces e Snacks",
+  "Congelados",
+  "Molhos e Condimentos",
+  "Limpeza",
+  "Higiene",
+  "Frios",
+  "Oleos e Gorduras",
+  "Outros"
+];
 
 const getCategoryColor = (category?: string): string => {
   const colors: Record<string, string> = {
@@ -41,6 +59,9 @@ const SharedListView = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
+  const [newItemSupermarket, setNewItemSupermarket] = useState('');
+  const [newItemExpiryDate, setNewItemExpiryDate] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('');
 
   useEffect(() => {
     const loadList = async () => {
@@ -113,17 +134,34 @@ const SharedListView = () => {
       return;
     }
 
-    try {
-      await addDoc(collection(db, 'lists', listId, 'items'), {
+    const newItem: any = {
         name: newItemName.trim(),
         quantity: 1,
         unit: 'un',
-        price: newItemPrice ? parseFloat(newItemPrice) : undefined,
         checked: false,
-      });
+    };
+
+    if (newItemPrice) {
+        newItem.price = parseFloat(newItemPrice);
+    }
+    if (newItemSupermarket) {
+        newItem.supermarket = newItemSupermarket;
+    }
+    if (newItemExpiryDate) {
+        newItem.expiryDate = newItemExpiryDate;
+    }
+    if (newItemCategory) {
+        newItem.category = newItemCategory;
+    }
+
+    try {
+      await addDoc(collection(db, 'lists', listId, 'items'), newItem);
 
       setNewItemName('');
       setNewItemPrice('');
+      setNewItemSupermarket('');
+      setNewItemExpiryDate('');
+      setNewItemCategory('');
       setIsAddDialogOpen(false);
       toast.success('Item adicionado com sucesso!');
     } catch (err) {
@@ -341,6 +379,44 @@ const SharedListView = () => {
                 placeholder="0.00"
                 className="glass border-border/50 h-11"
               />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="supermarket">Supermercado (opcional)</Label>
+              <Input
+                id="supermarket"
+                value={newItemSupermarket}
+                onChange={(e) => setNewItemSupermarket(e.target.value)}
+                placeholder="Ex: Carrefour"
+                className="glass border-border/50"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Validade (opcional)</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={newItemExpiryDate}
+                onChange={(e) => setNewItemExpiryDate(e.target.value)}
+                className="glass border-border/50"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria (opcional)</Label>
+              <Select value={newItemCategory} onValueChange={setNewItemCategory}>
+                <SelectTrigger className="glass border-border/50">
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent className="glass border-border/50">
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Alert className="glass border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10">

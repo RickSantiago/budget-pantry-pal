@@ -29,19 +29,18 @@ const categories = [
 interface AddItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // item does not include id and checked which are added by the caller
   onAddItem: (item: Omit<ShoppingItem, "id" | "checked">) => void;
   listTitle?: string;
 }
 
 const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDialogProps) => {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState(""); // opcional
+  const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [unit, setUnit] = useState("un");
-  const [price, setPrice] = useState(""); // opcional
-  const [supermarket, setSupermarket] = useState(""); // opcional
-  const [expiryDate, setExpiryDate] = useState(""); // opcional
+  const [price, setPrice] = useState("");
+  const [supermarket, setSupermarket] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -68,16 +67,27 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
       addSupermarket(supermarket);
     }
 
-    onAddItem({
-      name,
-      category: category || undefined,
-      quantity,
-      unit,
-      price: price ? parseFloat(price) : undefined,
-      supermarket: supermarket || undefined,
-      expiryDate: expiryDate || undefined,
-      isRecurring,
-    });
+    const newItem: any = {
+        name,
+        quantity,
+        unit,
+        isRecurring,
+    };
+
+    if (category) {
+        newItem.category = category;
+    }
+    if (price) {
+        newItem.price = parseFloat(price);
+    }
+    if (supermarket) {
+        newItem.supermarket = supermarket;
+    }
+    if (expiryDate) {
+        newItem.expiryDate = expiryDate;
+    }
+
+    onAddItem(newItem);
 
     // Reset form
     setName("");
@@ -134,7 +144,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
           </div>
 
           <div className="space-y-2 relative">
-            <Label htmlFor="supermarket">Supermercado</Label>
+            <Label htmlFor="supermarket">Supermercado (opcional)</Label>
             <Input
               id="supermarket"
               value={supermarket}
@@ -212,7 +222,7 @@ const AddItemDialog = ({ open, onOpenChange, onAddItem, listTitle }: AddItemDial
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="price">Preço R$</Label>
+            <Label htmlFor="price">Preço R$ (opcional)</Label>
             <Input
               id="price"
               type="number"

@@ -1,59 +1,78 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public access to the sharedLists collection
-    match /sharedLists/{listId} {
-      allow read, write: if true;
+
+    // Helper function to check for ownership
+    function isOwner(listId) {
+      return request.auth != null && (
+        get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid ||
+        get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
+      );
     }
     
-    // Lists collection rules
-    match /lists/{listId} {
-      // Allow read if list is public OR user is owner/collaborator
-      allow read: if resource.data.isPublic == true 
-                  || request.auth != null && (
-                    resource.data.ownerId == request.auth.uid 
-                    || resource.data.owner == request.auth.uid
-                    || request.auth.uid in resource.data.get('sharedWith', [])
-                    || request.auth.uid in resource.data.get('members', [])
-                  );
-      
-      // Only authenticated users can create lists
-      allow create: if request.auth != null;
-      
-      // Only owner can update/delete
-      allow update, delete: if request.auth != null && (
-        resource.data.ownerId == request.auth.uid 
-        || resource.data.owner == request.auth.uid
+    // Helper function to check for collaborator access
+    function isCollaborator(listId) {
+      return request.auth != null && (
+        request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', []) ||
+        request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
       );
+    }
+
+    // Helper function to validate item data
+    function isValidItem(item) {
+      // Required fields validation
+      return 'name' in item && item.name is string && item.name.size() > 0 &&
+             'quantity' in item && item.quantity is number && item.quantity > 0 &&
+             'unit' in item && item.unit is string &&
+             'checked' in item && item.checked is bool &&
+             // Optional fields validation
+             (!('price' in item) || item.price is number) &&
+             (!('category' in item) || item.category is string) &&
+             (!('supermarket' in item) || item.supermarket is string) &&
+             (!('expiryDate' in item) || item.expiryDate is string) &&
+             (!('isRecurring' in item) || item.isRecurring is bool) &&
+             // Ensure no other fields are present
+             item.keys().hasOnly([
+               'name', 'quantity', 'unit', 'checked', 
+               'price', 'category', 'supermarket', 'expiryDate', 'isRecurring'
+             ]);
+    }
+
+    match /lists/{listId} {
+      // Read access: Public lists can be read by anyone. Private lists only by owner/collaborators.
+      allow read: if resource.data.isPublic == true || isOwner(listId) || isCollaborator(listId);
+      
+      // Write access: Only owner/collaborators can update/delete lists
+      allow write: if isOwner(listId) || isCollaborator(listId);
+
+      // Create access: Any authenticated user can create a list
+      allow create: if request.auth != null;
       
       // Items subcollection
       match /items/{itemId} {
         // Read access same as parent list
-        allow read: if get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true
-                    || request.auth != null && (
-                      get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid
-                      || get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
-                      || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', [])
-                      || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
-                    );
+        allow read: if get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true || isOwner(listId) || isCollaborator(listId);
         
-        // Allow anyone to toggle checked status on public lists (limited update)
-        allow update: if get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['checked'])
-                      || request.auth != null && (
-                        get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid
-                        || get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
-                        || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', [])
-                        || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
-                      );
-        
-        // Only authenticated users who own or collaborate on the list can create/delete items
-        allow create, delete: if request.auth != null && (
-          get(/databases/$(database)/documents/lists/$(listId)).data.ownerId == request.auth.uid
-          || get(/databases/$(database)/documents/lists/$(listId)).data.owner == request.auth.uid
-          || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('sharedWith', [])
-          || request.auth.uid in get(/databases/$(database)/documents/lists/$(listId)).data.get('members', [])
-        );
+        // Update rule
+        allow update: if 
+          // Public users can only toggle the 'checked' field on a public list
+          (get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true && 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['checked'])) ||
+          // Owners and collaborators can update an item if the new data is valid
+          ((isOwner(listId) || isCollaborator(listId)) && isValidItem(request.resource.data));
+
+        // Create rule
+        allow create: if 
+          // Anyone can create an item on a public list, or owners/collaborators on private lists
+          (get(/databases/$(database)/documents/lists/$(listId)).data.isPublic == true || isOwner(listId) || isCollaborator(listId)) &&
+          // The new item data must be valid
+          isValidItem(request.resource.data) &&
+          // Items must be created with 'checked' set to false
+          request.resource.data.checked == false;
+
+        // Deletion only for owners/collaborators
+        allow delete: if isOwner(listId) || isCollaborator(listId);
       }
     }
   }
