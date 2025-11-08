@@ -19,7 +19,8 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList })
   }
 
   // Safe access to properties with default fallbacks.
-  const { title = "Lista sem título", items = [], date, plannedBudget, ownerId, sharedWith } = list;
+  const { title = "Lista sem título", date, plannedBudget, ownerId, sharedWith } = list;
+  const items = Array.isArray(list.items) ? list.items : [];
   const totalItems = items.length;
   const purchasedItems = items.filter(item => item.checked).length;
   
