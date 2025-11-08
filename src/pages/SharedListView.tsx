@@ -155,10 +155,17 @@ const SharedListView = () => {
 
   const totalItems = items.length;
   const checkedItems = items.filter(i => i.checked).length;
+  const allowedUnits = ['unidade', 'caixa', 'pacote'];
   const totalPrice = items.reduce((sum, item) => {
     const price = Number(item.price) || 0;
-    const qty = Number(item.quantity) || 1;
-    return sum + (price * qty);
+    const qty = Number(item.quantity) || 0;
+    const unit = item.unit ? String(item.unit).toLowerCase() : '';
+
+    if (allowedUnits.includes(unit)) {
+      return sum + price * qty;
+    }
+
+    return sum + price;
   }, 0);
 
   return (
