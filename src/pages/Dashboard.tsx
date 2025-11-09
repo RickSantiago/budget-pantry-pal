@@ -29,7 +29,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { differenceInDays, parseISO, startOfMonth } from "date-fns";
+import { differenceInDays, parseISO } from "date-fns";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -61,7 +61,24 @@ const Dashboard = () => {
     totalMonthlySpending,
     monthlyBudget
   } = useMemo(() => {
-    const lists: ShoppingList[] = listsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingList)) || [];
+    const allTimeLists: ShoppingList[] = listsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingList)) || [];
+    
+    // Filter for lists from the current month
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    const lists = allTimeLists.filter(list => {
+      // Prioritize the 'date' field as requested
+      if (list.date) {
+        const listDate = parseISO(list.date);
+        return listDate.getMonth() === currentMonth && listDate.getFullYear() === currentYear;
+      }
+      // Fallback to 'createdAt' for older lists
+      const listTimestamp = list.createdAt as any;
+      const listCreationDate = listTimestamp?.toDate ? listTimestamp.toDate() : new Date(listTimestamp as string);
+      return listCreationDate.getMonth() === currentMonth && listCreationDate.getFullYear() === currentYear;
+    });
     
     const allItems: ShoppingItem[] = lists.flatMap(list => list.items.map(item => ({...item, listCreatedAt: list.createdAt})));
     const totalItemsInAllLists = allItems.length;
@@ -75,6 +92,20 @@ const Dashboard = () => {
       const allowedUnits = ['unidade', 'caixa', 'pacote', 'un', 'cx', 'pct'];
       return allowedUnits.includes(unit) ? price * quantity : price;
     };
+
+    let totalMonthlySpending = 0;
+    const categorySpendingMap: { [key: string]: number } = {};
+
+    lists.forEach(list => {
+        list.items.forEach(item => {
+            if (item.checked) {
+                const itemPrice = calculateItemPrice(item);
+                totalMonthlySpending += itemPrice;
+                const category = item.category || "Outros";
+                categorySpendingMap[category] = (categorySpendingMap[category] || 0) + itemPrice;
+            }
+        });
+    });
 
     const pantryItems: PantryItem[] = pantrySnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as PantryItem)) || [];
     
@@ -94,25 +125,6 @@ const Dashboard = () => {
       alerts.push(`- ${soonestExpiringItem.name} vence ${days === 0 ? 'hoje' : `em ${days} dia(s)`}.`);
     }
 
-    const firstDayOfMonth = startOfMonth(new Date());
-    let totalMonthlySpending = 0;
-    const categorySpendingMap: { [key: string]: number } = {};
-
-    lists.forEach(list => {
-        const listTimestamp = list.createdAt as any;
-        const listDate = listTimestamp?.toDate ? listTimestamp.toDate() : new Date(listTimestamp);
-        if (listDate >= firstDayOfMonth) {
-            list.items.forEach(item => {
-                if (item.checked) {
-                    const itemPrice = calculateItemPrice(item);
-                    totalMonthlySpending += itemPrice;
-                    const category = item.category || "Outros";
-                    categorySpendingMap[category] = (categorySpendingMap[category] || 0) + itemPrice;
-                }
-            });
-        }
-    });
-
     const monthlyBudget = userData?.monthlyBudget || 0;
     if (monthlyBudget > 0 && totalMonthlySpending > monthlyBudget * 0.8 && totalMonthlySpending < monthlyBudget) {
         const percentageSpent = (totalMonthlySpending / monthlyBudget) * 100;
@@ -127,22 +139,22 @@ const Dashboard = () => {
       alerts.push("Nenhuma notificação importante no momento.");
     }
     
-    // New Suggestion Logic
+    const allTimeItems: ShoppingItem[] = allTimeLists.flatMap(list => list.items.map(item => ({...item, listCreatedAt: list.createdAt})));
     const itemFrequency: { [name: string]: number } = {};
-    allItems.forEach(item => {
+    allTimeItems.forEach(item => {
       itemFrequency[item.name] = (itemFrequency[item.name] || 0) + 1;
     });
 
     const sortedPopularItems = Object.keys(itemFrequency).sort((a, b) => itemFrequency[b] - itemFrequency[a]);
     
     const suggestions: ShoppingItem[] = sortedPopularItems.slice(0, 5).map(itemName => {
-        const mostRecentVersion = allItems
+        const mostRecentVersion = allTimeItems
             .filter(item => item.name === itemName)
             .sort((a, b) => (b.listCreatedAt?.seconds || 0) - (a.listCreatedAt?.seconds || 0))[0];
         return mostRecentVersion;
     });
 
-    return { lists, totalItemsInAllLists, purchasedItemsInAllLists, purchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
+    return { lists: allTimeLists, totalItemsInAllLists, purchasedItemsInAllLists, purchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
 
   }, [listsSnapshot, pantrySnapshot, userData]);
   
@@ -152,8 +164,8 @@ const Dashboard = () => {
   }
 
   const summaryCards = [
-    { icon: List, title: "Itens nas Listas", value: totalItemsInAllLists, color: "text-green-500", bgColor: "bg-green-500/10" },
-    { icon: CheckCircle, title: "Itens Comprados", value: `${purchasedItemsInAllLists} (${purchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { icon: List, title: "Itens no Mês", value: totalItemsInAllLists, color: "text-green-500", bgColor: "bg-green-500/10" },
+    { icon: CheckCircle, title: "Comprados no Mês", value: `${purchasedItemsInAllLists} (${purchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
     { icon: Wallet, title: "Gasto Total (Mês)", value: `R$ ${totalMonthlySpending.toFixed(2)}`, color: "text-amber-500", bgColor: "bg-amber-500/10" },
     { icon: AlertTriangle, title: "Próximos do Venc.", value: expiringItems, color: "text-red-500", bgColor: "bg-red-500/10", action: () => navigate('/pantry') },
   ];
