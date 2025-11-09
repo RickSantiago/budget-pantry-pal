@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ const getCategoryColor = (category?: string): string => {
 
 const SharedListView = () => {
   const { listId } = useParams<{ listId: string }>();
+  const [user, loadingUser] = useAuthState(auth);
   const [list, setList] = useState<ShoppingList | null>(null);
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ const SharedListView = () => {
 
   useEffect(() => {
     const loadList = async () => {
-      if (!listId) return;
+      if (!listId || loadingUser) return;
 
       try {
         const listDoc = await getDoc(doc(db, 'lists', listId));
@@ -83,8 +85,11 @@ const SharedListView = () => {
 
         const listData = { ...listDoc.data(), id: listDoc.id } as ShoppingList;
 
-        if (!listData.isPublic) {
-          setError('Esta lista não está disponível publicamente');
+        const isOwner = user && listData.ownerId === user.uid;
+        const isCollaborator = user && Array.isArray(listData.sharedWith) && listData.sharedWith.includes(user.email || '');
+
+        if (!listData.isPublic && !isOwner && !isCollaborator) {
+          setError('Esta lista é privada e você não tem permissão para acessá-la.');
           setLoading(false);
           return;
         }
@@ -98,8 +103,10 @@ const SharedListView = () => {
       }
     };
 
-    loadList();
-  }, [listId]);
+    if (!loadingUser) {
+        loadList();
+    }
+  }, [listId, user, loadingUser]);
 
   useEffect(() => {
     if (!listId || !list) return;
@@ -179,7 +186,7 @@ const SharedListView = () => {
     }
   };
 
-  if (loading) {
+  if (loading || loadingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
         <p className="text-lg">Carregando lista compartilhada...</p>

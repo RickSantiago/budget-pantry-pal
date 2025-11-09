@@ -49,7 +49,7 @@ const ShareListDialog: React.FC<Props> = ({ open, onOpenChange, listId }) => {
       }
     };
     loadListAndOwner();
-  }, [listId, open]); // Reload when dialog opens
+  }, [listId, open]);
 
   const handleAdd = async () => {
     if (!listId || !input.trim()) return;
@@ -118,7 +118,37 @@ const ShareListDialog: React.FC<Props> = ({ open, onOpenChange, listId }) => {
           </TabsList>
 
           <TabsContent value="public" className="space-y-4 mt-4">
-            {/* Public sharing content remains the same */}
+            <div className="flex items-center justify-between glass rounded-lg p-4 border border-border/50">
+              <Label htmlFor="public-switch" className="flex flex-col gap-1">
+                <span className="font-semibold">Lista Pública</span>
+                <span className="text-sm text-muted-foreground">
+                  {isPublic ? 'Qualquer pessoa com o link pode ver' : 'Apenas colaboradores podem ver'}
+                </span>
+              </Label>
+              <Switch id="public-switch" checked={isPublic} onCheckedChange={handleTogglePublic} />
+            </div>
+
+            {isPublic && (
+              <div className="space-y-3 animate-fade-in">
+                 <Alert className='glass text-sm border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      Sua lista pode ser acessada por qualquer pessoa com o link. Eles podem ver, marcar e adicionar itens.
+                    </AlertDescription>
+                  </Alert>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={`${window.location.origin}/shared/${listId}`}
+                    className="glass text-muted-foreground"
+                  />
+                  <Button onClick={handleCopyPublicLink} variant="default" className="flex-shrink-0">
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    Copiar link
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="collaborators" className="space-y-4 mt-4">
