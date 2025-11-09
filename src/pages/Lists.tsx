@@ -57,23 +57,26 @@ const Lists = () => {
 
   // Fetch lists from Firestore
   useEffect(() => {
+    if (!user) {
+      setLists([]);
+      return;
+    }
+
     const q = query(collection(db, 'lists'));
     const unsubscribe = onSnapshot(q, querySnapshot => {
       const listsData: ShoppingList[] = [];
       querySnapshot.forEach(doc => {
         listsData.push({ ...doc.data(), id: doc.id } as ShoppingList);
       });
-      // If user is present, show only lists owned by or shared with the user
-      let visible = listsData;
-      if (user) {
-        visible = listsData.filter(l =>
-          (l.owner === user.uid) || (l.ownerId === user.uid) ||
-          (Array.isArray(l.sharedWith) && l.sharedWith.includes(user.uid)) ||
-          (Array.isArray(l.members) && l.members.includes(user.uid))
-        );
-      }
-      setLists(visible);
+
+      const visibleLists = listsData.filter(l => 
+        l.ownerId === user.uid || 
+        (Array.isArray(l.sharedWith) && l.sharedWith.includes(user.email || ''))
+      );
+      
+      setLists(visibleLists);
     });
+
     return () => unsubscribe();
   }, [user]);
 
@@ -99,12 +102,11 @@ const Lists = () => {
   const currentList = lists.find(list => list.id === currentListId);
 
   const handleCreateList = async (listData: { title: string; observation: string; date: string; plannedBudget?: number }) => {
+    if (!user) return;
     const payload = {
       ...listData,
-      owner: user ? user.uid : undefined,
-      ownerId: user ? user.uid : undefined,
+      ownerId: user.uid,
       sharedWith: [],
-      members: [],
       createdAt: new Date().toISOString(),
     };
     const newListRef = await addDoc(collection(db, 'lists'), payload);
