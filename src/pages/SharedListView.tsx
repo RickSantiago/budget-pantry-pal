@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc, deleteField } from 'firebase/firestore';
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Check, Plus, Repeat2, MapPin, Calendar } from 'lucide-react';
+import { Info, Check, Plus, Repeat2, MapPin, Calendar, Pencil } from 'lucide-react';
 import { getCategoryIcon } from '@/utils/categoryIcons';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import EditItemDialog from '@/components/EditItemDialog';
 
 const categories = [
   "Grãos e Cereais",
@@ -69,6 +70,12 @@ const SharedListView = () => {
   const [newItemQuantity, setNewItemQuantity] = useState(1);
   const [newItemUnit, setNewItemUnit] = useState('unidade');
   const [newItemIsRecurring, setNewItemIsRecurring] = useState(false);
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  const isOwner = user && list?.ownerId === user.uid;
+  const isCollaborator = user && Array.isArray(list?.sharedWith) && list.sharedWith.includes(user.email || '');
 
   useEffect(() => {
     const loadList = async () => {
@@ -156,15 +163,23 @@ const SharedListView = () => {
 
     if (newItemPrice) {
         newItem.price = parseFloat(newItemPrice);
+    } else {
+        newItem.price = deleteField();
     }
     if (newItemSupermarket) {
         newItem.supermarket = newItemSupermarket;
+    } else {
+        newItem.supermarket = deleteField();
     }
     if (newItemExpiryDate) {
         newItem.expiryDate = newItemExpiryDate;
+    } else {
+        newItem.expiryDate = deleteField();
     }
     if (newItemCategory) {
         newItem.category = newItemCategory;
+    } else {
+        newItem.category = deleteField();
     }
 
     try {
@@ -185,6 +200,38 @@ const SharedListView = () => {
       toast.error('Erro ao adicionar item');
     }
   };
+  
+  const handleOpenEditDialog = (item: ShoppingItem) => {
+    setEditingItem(item);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditItem = async (updatedItem: ShoppingItem) => {
+    if (!listId || !updatedItem.id) return;
+    const itemRef = doc(db, 'lists', listId, 'items', updatedItem.id);
+    
+    const { id, ...dataToUpdate } = updatedItem;
+
+    const dataForFirebase: { [key: string]: any } = {};
+    for (const key in dataToUpdate) {
+        const value = (dataToUpdate as any)[key];
+        if (value === undefined) {
+            dataForFirebase[key] = deleteField();
+        } else {
+            dataForFirebase[key] = value;
+        }
+    }
+
+    try {
+        await updateDoc(itemRef, dataForFirebase);
+        toast.success(`"${updatedItem.name}" foi atualizado.`);
+        setIsEditDialogOpen(false);
+    } catch (err) {
+        console.error("Error updating item:", err);
+        toast.error("Erro ao atualizar item.");
+    }
+  };
+
 
   if (loading || loadingUser) {
     return (
@@ -229,7 +276,7 @@ const SharedListView = () => {
           <Alert className="mb-4 glass border-primary/30 bg-primary/5">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="text-xs sm:text-sm">
-              Lista compartilhada em tempo real. Qualquer pessoa pode visualizar, marcar itens e adicionar novos produtos sem fazer login.
+              Você está vendo uma lista compartilhada. Suas alterações são salvas e sincronizadas para todos.
             </AlertDescription>
           </Alert>
 
@@ -279,9 +326,11 @@ const SharedListView = () => {
           {items.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-sm sm:text-base text-muted-foreground mb-4">Nenhum item na lista</p>
-              <Button onClick={() => setIsAddDialogOpen(true)} variant="outline" className="glass">
-                Adicionar primeiro item
-              </Button>
+              {(isOwner || isCollaborator) && (
+                  <Button onClick={() => setIsAddDialogOpen(true)} variant="outline" className="glass">
+                    Adicionar primeiro item
+                  </Button>
+              )}
             </div>
           ) : (
             items.map((item) => (
@@ -299,6 +348,7 @@ const SharedListView = () => {
                         ? 'bg-primary border-primary'
                         : 'border-muted-foreground/30 hover:border-primary'
                     }`}
+                    disabled={!isOwner && !isCollaborator}
                   >
                     {item.checked && <Check className="w-4 h-4 text-primary-foreground" />}
                   </button>
@@ -349,31 +399,38 @@ const SharedListView = () => {
                       )}
                     </div>
                   </div>
-
-                  {item.price && (
-                    <div className="text-right flex-shrink-0">
-                      {(() => {
-                        const allowedUnits = ['unidade', 'caixa', 'pacote'];
-                        const price = Number(item.price) || 0;
-                        const quantity = Number(item.quantity) || 1;
-                        const unit = String(item.unit || '').toLowerCase();
-                        const total = allowedUnits.includes(unit) ? price * quantity : price;
-                        
-                        return (
-                          <>
-                            <p className="font-bold text-lg text-success">
-                              R$ {total.toFixed(2)}
-                            </p>
-                            {allowedUnits.includes(unit) && quantity > 1 && (
-                              <p className="text-xs text-muted-foreground">
-                                {quantity}x R$ {price.toFixed(2)}
-                              </p>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
+                  
+                  <div className="flex flex-col items-end gap-2">
+                    {item.price && (
+                        <div className="text-right flex-shrink-0">
+                        {(() => {
+                            const allowedUnits = ['unidade', 'caixa', 'pacote'];
+                            const price = Number(item.price) || 0;
+                            const quantity = Number(item.quantity) || 1;
+                            const unit = String(item.unit || '').toLowerCase();
+                            const total = allowedUnits.includes(unit) ? price * quantity : price;
+                            
+                            return (
+                            <>
+                                <p className="font-bold text-lg text-success">
+                                R$ {total.toFixed(2)}
+                                </p>
+                                {allowedUnits.includes(unit) && quantity > 1 && (
+                                <p className="text-xs text-muted-foreground">
+                                    {quantity}x R$ {price.toFixed(2)}
+                                </p>
+                                )}
+                            </>
+                            );
+                        })()}
+                        </div>
+                    )}
+                    {(isOwner || isCollaborator) && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(item)}>
+                            <Pencil className="w-4 h-4" />
+                        </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))
@@ -381,12 +438,14 @@ const SharedListView = () => {
         </div>
       </div>
 
-      <Button
-        onClick={() => setIsAddDialogOpen(true)}
-        className="fixed bottom-6 right-4 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-glow hover:shadow-xl transition-all duration-300 animate-scale-in"
-      >
-        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-      </Button>
+      {(isOwner || isCollaborator) && (
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="fixed bottom-6 right-4 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-glow hover:shadow-xl transition-all duration-300 animate-scale-in"
+          >
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
+          </Button>
+      )}
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="glass border-border/50 shadow-xl max-w-md">
@@ -555,6 +614,16 @@ const SharedListView = () => {
           </form>
         </DialogContent>
       </Dialog>
+      
+      {list && (
+        <EditItemDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            onEditItem={handleEditItem}
+            item={editingItem}
+            listTitle={list.title}
+        />
+      )}
     </div>
   );
 };
