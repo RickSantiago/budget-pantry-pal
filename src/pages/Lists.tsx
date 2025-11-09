@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import {
@@ -36,11 +35,14 @@ import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import AppHeader from '@/components/AppHeader';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ListCardSkeleton from '@/components/ListCardSkeleton';
 
 const Lists = () => {
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [items, setItems] = useState<ShoppingItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // UI State
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -50,18 +52,24 @@ const Lists = () => {
   const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedListForShare, setSelectedListForShare] = useState<string | null>(null);
-  const [user] = useAuthState(auth);
+  const [user, userLoading] = useAuthState(auth);
   const [sortAZ, setSortAZ] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
   const [showBudgetAlert, setShowBudgetAlert] = useState(true);
 
   // Fetch lists from Firestore
   useEffect(() => {
+    if (userLoading) {
+        setLoading(true);
+        return;
+    }
     if (!user) {
       setLists([]);
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
     const q = query(collection(db, 'lists'));
     const unsubscribe = onSnapshot(q, querySnapshot => {
       const listsData: ShoppingList[] = [];
@@ -75,10 +83,11 @@ const Lists = () => {
       );
       
       setLists(visibleLists);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, userLoading]);
 
   // Fetch items for the current list from Firestore
   useEffect(() => {
@@ -169,6 +178,41 @@ const Lists = () => {
   };
 
   if (!currentListId || !currentList) {
+     if (loading) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24 flex flex-col">
+          <AppHeader
+            title="Market Match"
+            subtitle="Seu app de organização de compras"
+            rightNode={
+              <Button variant='outline' size='icon' className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10'>
+                <User className='w-4 h-4 sm:w-5 sm:h-5' />
+              </Button>
+            }
+          />
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Minhas Listas</h1>
+                <p className="text-sm text-muted-foreground">Carregando suas listas...</p>
+              </div>
+              <Button size="lg" className="shadow-glow hover:shadow-xl transition-all duration-300 w-full sm:w-auto" disabled>
+                <Plus className="mr-2 h-5 w-5" /> Nova Lista
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              <ListCardSkeleton />
+              <ListCardSkeleton />
+            </div>
+          </div>
+          <div className="flex-grow flex items-center justify-center">
+              <LoadingSpinner size={32} />
+          </div>
+          <BottomNavigation />
+        </div>
+      );
+    }
+
     return (
       <div className='min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24'>
         <AppHeader
