@@ -1,83 +1,88 @@
-import { Check, Edit } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { getCategoryIcon } from "@/utils/categoryIcons";
+import { ShoppingItem } from '@/types/shopping';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { Edit2, Store, CalendarDays, Repeat } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { getCategoryIcon } from '@/utils/categoryIcons';
+import { getCategoryColor } from '@/utils/categoryColors';
 
 interface ListItemProps {
-  item: {
-    id: string;
-    name: string;
-    category?: string;
-    quantity?: number;
-    unit?: string;
-    price?: number;
-    checked: boolean;
-    supermarket?: string;
-    expiryDate?: string;
-    isRecurring?: boolean;
-  };
+  item: ShoppingItem;
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
 }
 
 const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
+  const CategoryIcon = getCategoryIcon(item.category);
+  const categoryColor = getCategoryColor(item.category);
+
+  const price = Number(item.price) || 0;
+  const quantity = Number(item.quantity) || 1;
+  const unit = (item.unit || '').toLowerCase();
+  const isMultipliable = ['unidade', 'caixa', 'pacote', 'un', 'cx', 'pct'].includes(unit);
+  const totalPrice = isMultipliable ? price * quantity : price;
+
   return (
     <div
-      className={`glass rounded-2xl p-4 border border-border/50 transition-all duration-300 hover:shadow-md ${item.checked ? "opacity-60" : ""}`}
-    >
-      <div className="flex items-center gap-4">
-        <Checkbox
-          checked={item.checked}
-          onCheckedChange={() => onToggle(item.id)}
-          className="w-6 h-6 rounded-full border-2 data-[state=checked]:gradient-success"
-        />
+      className={`flex items-start gap-2 sm:gap-4 p-2.5 sm:p-3 rounded-lg transition-all duration-300 glass border ${item.checked ? 'border-green-500/30 bg-green-500/10' : 'border-border/50'}`}>
+      
+      <Checkbox
+        checked={item.checked}
+        onCheckedChange={() => onToggle(item.id)}
+        className={`mt-1 w-5 h-5 sm:w-6 sm:h-6 rounded-md transition-all duration-300 ${item.checked ? 'border-green-500 bg-green-500' : ''}`}
+      />
+      
+      <div className='flex-1 min-w-0'>
+        <p className={`font-medium text-sm sm:text-base truncate ${item.checked ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+          {item.name}
+        </p>
 
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className={`font-semibold text-foreground ${item.checked ? "line-through" : ""}`}>{item.name}</h3>
-            {item.category && (() => {
-              const Icon = getCategoryIcon(item.category);
-              return <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />;
-            })()}
-          </div>
-          {item.category && (
-            <Badge variant="secondary" className="text-xs mt-1">
-              {item.category}
-            </Badge>
-          )}
-          {item.supermarket && <p className="text-xs text-muted-foreground mt-1">Supermercado: {item.supermarket}</p>}
-          {item.expiryDate && <p className="text-xs text-muted-foreground">Validade: {new Date(item.expiryDate).toLocaleDateString('pt-BR')}</p>}
-          {item.isRecurring && <p className="text-xs text-primary font-medium">🔄 Recorrente</p>}
+        <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground mt-1'>
+            {item.price != null && item.price > 0 && (
+                 <span className='font-semibold text-primary/90'>
+                    R$ {totalPrice.toFixed(2)}
+                    {isMultipliable && quantity > 1 && (
+                        <span className="text-muted-foreground font-normal text-xs ml-1.5">
+                            (R$ {price.toFixed(2)} x {quantity})
+                        </span>
+                    )}
+                </span>
+            )}
+           
+            {item.quantity && item.unit && (
+                <span className="before:content-['•'] before:mr-2">{item.quantity} {item.unit}(s)</span>
+            )}
+        </div>
+        
+        <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-2'>
+            {item.supermarket && (
+                <span className='flex items-center gap-1.5'>
+                    <Store size={14} /> {item.supermarket}
+                </span>
+            )}
+            {item.expiryDate && (
+                <span className="flex items-center gap-1.5 before:content-['•'] before:mr-1.5">
+                    <CalendarDays size={14} /> {new Date(item.expiryDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}
+                </span>
+            )}
+            {item.isRecurring && (
+                <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium before:content-['•'] before:mr-1.5">
+                    <Repeat size={14} /> Recorrente
+                </span>
+            )}
         </div>
 
-        <div className="text-right flex-shrink-0">
-          {/* allowedUnits: unidade, caixa, pacote */}
-          <p className="font-semibold">
-            {(() => {
-              const allowedUnits = ["unidade", "caixa", "pacote"];
-              const price = Number(item.price) || 0;
-              const quantity = item.quantity ?? 1;
-              const unit = item.unit ? String(item.unit).toLowerCase() : "";
-              if (allowedUnits.includes(unit)) {
-                return `R$ ${(price * quantity).toFixed(2)}`;
-              } else {
-                return `R$ ${price.toFixed(2)}`;
-              }
-            })()}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {item.quantity ?? 1}{item.unit ?? ""} x R$ {item.price !== undefined ? Number(item.price).toFixed(2) : "-"}
-          </p>
-        </div>
+      </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onEdit(item.id)}
-          className="flex-shrink-0 rounded-full h-9 w-9 hover:bg-primary/10"
-        >
-          <Edit className="w-4 h-4" />
+      <div className='flex items-center gap-1 flex-shrink-0'>
+        {item.category && (
+          <Badge variant="outline" className={`hidden md:flex items-center gap-1.5 ${categoryColor}`}>
+            <CategoryIcon className="h-3.5 w-3.5" />
+            {item.category}
+          </Badge>
+        )}
+        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:h-9" onClick={() => onEdit(item.id)}>
+          <Edit2 className="h-4 w-4 text-muted-foreground" />
         </Button>
       </div>
     </div>

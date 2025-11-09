@@ -10,7 +10,7 @@ import {
   deleteDoc,
   writeBatch,
   getDocs,
-  deleteField, // Importa deleteField
+  deleteField,
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -61,8 +61,8 @@ const Lists = () => {
   // Fetch lists from Firestore
   useEffect(() => {
     if (userLoading) {
-        setLoading(true);
-        return;
+      setLoading(true);
+      return;
     }
     if (!user) {
       setLists([]);
@@ -72,18 +72,35 @@ const Lists = () => {
 
     setLoading(true);
     const q = query(collection(db, 'lists'));
-    const unsubscribe = onSnapshot(q, querySnapshot => {
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const listsData: ShoppingList[] = [];
-      querySnapshot.forEach(doc => {
-        listsData.push({ ...doc.data(), id: doc.id } as ShoppingList);
-      });
+      for (const docSnapshot of querySnapshot.docs) {
+        const list = { ...docSnapshot.data(), id: docSnapshot.id } as ShoppingList;
 
-      const visibleLists = listsData.filter(l => 
-        l.ownerId === user.uid || 
-        (Array.isArray(l.sharedWith) && l.sharedWith.includes(user.email || ''))
-      );
+        if (list.ownerId === user.uid || (Array.isArray(list.sharedWith) && list.sharedWith.includes(user.email || ''))) {
+          const itemsCollection = collection(db, 'lists', list.id, 'items');
+          const itemsSnapshot = await getDocs(itemsCollection);
+          const listItems = itemsSnapshot.docs.map(itemDoc => itemDoc.data() as ShoppingItem);
+          
+          list.items = listItems;
+          list.totalSpent = listItems.reduce((sum, item) => {
+            const price = Number(item.price) || 0;
+            const quantity = Number(item.quantity) || 1;
+            const unit = String(item.unit || "").toLowerCase();
+            const allowedUnits = ['unidade', 'caixa', 'pacote', 'un', 'cx', 'pct'];
+
+            if (allowedUnits.includes(unit)) {
+              return sum + price * quantity;
+            } else {
+              return sum + price;
+            }
+          }, 0);
+
+          listsData.push(list);
+        }
+      }
       
-      setLists(visibleLists);
+      setLists(listsData);
       setLoading(false);
     });
 
@@ -131,7 +148,6 @@ const Lists = () => {
   };
 
   const handleDeleteList = async (listId: string) => {
-    // Delete all items in the subcollection first
     const itemsCollection = collection(db, 'lists', listId, 'items');
     const itemsSnapshot = await getDocs(itemsCollection);
     const batch = writeBatch(db);
@@ -140,7 +156,6 @@ const Lists = () => {
     });
     await batch.commit();
 
-    // Then delete the list itself
     await deleteDoc(doc(db, 'lists', listId));
   };
 
@@ -168,7 +183,6 @@ const Lists = () => {
     
     const { id, ...dataToUpdate } = updatedItem;
 
-    // Converte valores undefined para deleteField() para o Firestore
     const dataForFirebase: { [key: string]: any } = {};
     for (const key in dataToUpdate) {
         const value = (dataToUpdate as any)[key];
