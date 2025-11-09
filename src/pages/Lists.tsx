@@ -10,6 +10,7 @@ import {
   deleteDoc,
   writeBatch,
   getDocs,
+  deleteField, // Importa deleteField
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -164,9 +165,21 @@ const Lists = () => {
   const handleEditItem = async (updatedItem: ShoppingItem) => {
     if (!currentListId || !updatedItem.id) return;
     const itemRef = doc(db, 'lists', currentListId, 'items', updatedItem.id);
-    // Avoid passing id and undefined fields to Firestore
+    
     const { id, ...dataToUpdate } = updatedItem;
-    await updateDoc(itemRef, dataToUpdate);
+
+    // Converte valores undefined para deleteField() para o Firestore
+    const dataForFirebase: { [key: string]: any } = {};
+    for (const key in dataToUpdate) {
+        const value = (dataToUpdate as any)[key];
+        if (value === undefined) {
+            dataForFirebase[key] = deleteField();
+        } else {
+            dataForFirebase[key] = value;
+        }
+    }
+
+    await updateDoc(itemRef, dataForFirebase);
   };
 
   const handleOpenEditDialog = (itemId: string) => {
