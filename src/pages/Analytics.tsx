@@ -12,6 +12,10 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 // --- HELPERS ---
+const parseLocal = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day, 12); // Use 12:00 to avoid timezone shifts
+};
 const getMonthYearLabel = (date: Date) => date.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
 const getWeekLabel = (date: Date) => {
     const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -82,7 +86,8 @@ const Analytics = () => {
   }, [user, authLoading]);
 
   const monthYearOptions = useMemo(() => {
-    const uniqueMonths = Array.from(new Set(lists.map(list => getMonthYearLabel(new Date(list.date)))))
+    if (lists.length === 0) return [];
+    const uniqueMonths = Array.from(new Set(lists.map(list => getMonthYearLabel(parseLocal(list.date)))))
       .map(label => {
         const [monthStr, yearStr] = label.split('/');
         const monthIndex = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'].indexOf(monthStr.toLowerCase());
@@ -93,16 +98,17 @@ const Analytics = () => {
   }, [lists]);
 
   const chartData = useMemo(() => {
-    const filtered = selectedMonth ? lists.filter(list => getMonthYearLabel(new Date(list.date)) === selectedMonth) : lists;
+    const filtered = selectedMonth ? lists.filter(list => getMonthYearLabel(parseLocal(list.date)) === selectedMonth) : lists;
     const allItems = filtered.flatMap(list => list.items);
 
     const listExpenses = filtered.map(list => ({ name: list.title.length > 12 ? `${list.title.substring(0, 10)}...` : list.title, total: list.items.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0) }));
     const supermarket = Object.entries(allItems.reduce((acc, item) => { const market = item.supermarket || 'Não informado'; acc[market] = (acc[market] || 0) + ((Number(item.price) || 0) * (item.quantity || 1)); return acc; }, {} as Record<string, number>)).map(([name, value]) => ({ name, value }));
     const category = Object.entries(allItems.reduce((acc, item) => { const category = item.category || 'Outros'; acc[category] = (acc[category] || 0) + ((Number(item.price) || 0) * (item.quantity || 1)); return acc; }, {} as Record<string, number>)).map(([name, value]) => ({ name, value }));
     const topItems = allItems.map(item => ({ name: item.name, totalCost: (Number(item.price) || 0) * (item.quantity || 1) })).sort((a, b) => b.totalCost - a.totalCost).slice(0, 5);
-    const topRecurring = allItems.filter(item => item.isRecurring && item.expiryDate).sort((a, b) => new Date(a.expiryDate!).getTime() - new Date(b.expiryDate!).getTime()).slice(0, 5);
+    const topRecurring = allItems.filter(item => item.isRecurring && item.expiryDate).sort((a, b) => parseLocal(a.expiryDate!).getTime() - parseLocal(b.expiryDate!).getTime()).slice(0, 5);
     const today = new Date();
-    const expiring = allItems.filter(item => item.expiryDate).map(item => ({ ...item, diffDays: Math.ceil((new Date(item.expiryDate!).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) })).filter(item => item.diffDays >= 0).sort((a, b) => a.diffDays - b.diffDays).slice(0, 5);
+    today.setHours(0, 0, 0, 0);
+    const expiring = allItems.filter(item => item.expiryDate).map(item => ({ ...item, diffDays: Math.ceil((parseLocal(item.expiryDate!).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) })).filter(item => item.diffDays >= 0).sort((a, b) => a.diffDays - b.diffDays).slice(0, 5);
 
     // Dynamic Price Evolution
     const uniqueProductNames = Array.from(new Set(allItems.filter(item => item.price > 0).map(item => item.name.toLowerCase())));
@@ -110,7 +116,7 @@ const Analytics = () => {
     const isMonthView = !selectedMonth;
     const timeGroupMap: Record<string, Record<string, number[]>> = {};
     filtered.forEach(list => {
-      const date = new Date(list.date);
+      const date = parseLocal(list.date);
       const timeKey = isMonthView ? getMonthYearLabel(date) : getWeekLabel(date);
       if (!timeGroupMap[timeKey]) timeGroupMap[timeKey] = {};
       list.items.forEach(item => {
@@ -129,8 +135,10 @@ const Analytics = () => {
       });
       return entry;
     }).sort((a,b) => {
-      if (isMonthView) return 0; // Already sorted by useMemo hook
-      return parseInt(a.time.replace('Sem ', '')) - parseInt(b.time.replace('Sem ', ''));
+      if (isMonthView) return 0;
+      const weekA = parseInt(a.time.replace('Sem ', ''));
+      const weekB = parseInt(b.time.replace('Sem ', ''));
+      return weekA - weekB;
     });
 
     return {
@@ -174,7 +182,7 @@ const Analytics = () => {
           <div className="text-center py-20"><h3 className="text-xl font-semibold">Nenhuma lista encontrada</h3><p className="text-muted-foreground text-sm mt-2">Crie listas e adicione itens para ver suas análises.</p></div>
         ) : (
           <div className="space-y-6">
-            <Card className="glass-card"><CardHeader><CardTitle className="flex items-center gap-2"><BarChart3/>Gastos por Lista</CardTitle></CardHeader><CardContent>
+            {chartData.listExpensesData.length > 0 && <Card className="glass-card"><CardHeader><CardTitle className="flex items-center gap-2"><BarChart3/>Gastos por Lista</CardTitle></CardHeader><CardContent>
               <ResponsiveContainer width="100%" height={350}>
                 <RechartsBar data={chartData.listExpensesData} margin={{ top: 20, right: 10, left: -20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
@@ -184,7 +192,7 @@ const Analytics = () => {
                   <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]}><LabelList dataKey="total" position="top" formatter={(value: number) => `R$${value.toFixed(2)}`} className="text-xs fill-foreground" /></Bar>
                 </RechartsBar>
               </ResponsiveContainer>
-            </CardContent></Card>
+            </CardContent></Card>}
 
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="glass-card"><CardHeader><CardTitle className="flex items-center gap-2"><PieIcon />Gastos por Categoria</CardTitle></CardHeader><CardContent>
@@ -205,14 +213,14 @@ const Analytics = () => {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-                 <Card className="glass-card"><CardHeader><CardTitle className="flex items-center gap-2">🏆 Top 5 Preços de Produtos</CardTitle></CardHeader><CardContent className="space-y-3 pt-4">
+                 <Card className="glass-card"><CardHeader><CardTitle className="flex items-center gap-2">🏆 Top 5 Produtos</CardTitle></CardHeader><CardContent className="space-y-3 pt-4">
                     {chartData.topSpendingItems.length > 0 ? chartData.topSpendingItems.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-background/50"><span className="font-medium text-sm truncate pr-2">{item.name}</span><Badge variant="destructive" className="text-sm">R$ {item.totalCost.toFixed(2)}</Badge></div>
                     )) : <div className="h-[150px] flex-center text-muted-foreground">Sem itens para analisar.</div>}
                 </CardContent></Card>
                 <Card className="glass-card"><CardHeader><CardTitle className="flex items-center gap-2"><Repeat />Top 5 Recorrentes</CardTitle></CardHeader><CardContent className="space-y-3 pt-4">
                     {chartData.topRecurringItems.length > 0 ? chartData.topRecurringItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50"><span className="font-medium text-sm truncate pr-2">{item.name}</span><span className="text-sm text-muted-foreground">Val: {new Date(item.expiryDate!).toLocaleDateString('pt-BR')}</span></div>
+                        <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50"><span className="font-medium text-sm truncate pr-2">{item.name}</span><span className="text-sm text-muted-foreground">Val: {parseLocal(item.expiryDate!).toLocaleDateString('pt-BR')}</span></div>
                     )) : <div className="h-[150px] flex-center text-muted-foreground">Sem itens recorrentes com validade.</div>}
                 </CardContent></Card>
             </div>
