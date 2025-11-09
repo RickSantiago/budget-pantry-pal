@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart, ShoppingCart, Home, Bell, Settings } from "lucide-react";
+import { BarChart, ShoppingCart, Home, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
@@ -9,8 +9,7 @@ const navigationItems = [
   { icon: BarChart, text: "Gráficos", path: "/analytics" },
   { icon: ShoppingCart, text: "Lista", path: "/lists" },
   { icon: Home, text: "Home", path: "/dashboard" },
-  { icon: Bell, text: "Avisos", path: "/notificacoes" },
-  { icon: Settings, text: "Config", path: "/config" },
+  { icon: User, text: "Perfil", path: "/profile" },
 ];
 
 const BottomNavigation = () => {

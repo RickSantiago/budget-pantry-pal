@@ -1,6 +1,8 @@
 import { Check, Edit } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getCategoryIcon } from "@/utils/categoryIcons";
 
 interface ListItemProps {
   item: {
@@ -32,11 +34,21 @@ const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
         />
 
         <div className="flex-1">
-          <h3 className={`font-semibold ${item.checked ? "line-through" : ""}`}>{item.name}</h3>
-          {item.category && <p className="text-sm text-muted-foreground">{item.category}</p>}
-          {item.supermarket && <p className="text-xs text-muted-foreground">Supermercado: {item.supermarket}</p>}
+          <div className="flex items-center gap-2">
+            <h3 className={`font-semibold text-foreground ${item.checked ? "line-through" : ""}`}>{item.name}</h3>
+            {item.category && (() => {
+              const Icon = getCategoryIcon(item.category);
+              return <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />;
+            })()}
+          </div>
+          {item.category && (
+            <Badge variant="secondary" className="text-xs mt-1">
+              {item.category}
+            </Badge>
+          )}
+          {item.supermarket && <p className="text-xs text-muted-foreground mt-1">Supermercado: {item.supermarket}</p>}
           {item.expiryDate && <p className="text-xs text-muted-foreground">Validade: {new Date(item.expiryDate).toLocaleDateString('pt-BR')}</p>}
-          {item.isRecurring && <p className="text-xs text-muted-foreground">Recorrente</p>}
+          {item.isRecurring && <p className="text-xs text-primary font-medium">🔄 Recorrente</p>}
         </div>
 
         <div className="text-right flex-shrink-0">

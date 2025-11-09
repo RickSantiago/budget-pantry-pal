@@ -5,7 +5,9 @@ import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc } from 'firebase
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Check, Plus, Repeat2, MapPin } from 'lucide-react';
+import { Info, Check, Plus, Repeat2, MapPin, Calendar } from 'lucide-react';
+import { getCategoryIcon } from '@/utils/categoryIcons';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +64,9 @@ const SharedListView = () => {
   const [newItemSupermarket, setNewItemSupermarket] = useState('');
   const [newItemExpiryDate, setNewItemExpiryDate] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('');
+  const [newItemQuantity, setNewItemQuantity] = useState(1);
+  const [newItemUnit, setNewItemUnit] = useState('unidade');
+  const [newItemIsRecurring, setNewItemIsRecurring] = useState(false);
 
   useEffect(() => {
     const loadList = async () => {
@@ -136,9 +141,10 @@ const SharedListView = () => {
 
     const newItem: any = {
         name: newItemName.trim(),
-        quantity: 1,
-        unit: 'un',
+        quantity: newItemQuantity,
+        unit: newItemUnit,
         checked: false,
+        isRecurring: newItemIsRecurring,
     };
 
     if (newItemPrice) {
@@ -162,6 +168,9 @@ const SharedListView = () => {
       setNewItemSupermarket('');
       setNewItemExpiryDate('');
       setNewItemCategory('');
+      setNewItemQuantity(1);
+      setNewItemUnit('unidade');
+      setNewItemIsRecurring(false);
       setIsAddDialogOpen(false);
       toast.success('Item adicionado com sucesso!');
     } catch (err) {
@@ -288,9 +297,15 @@ const SharedListView = () => {
                   </button>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className={`font-bold text-base ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                      {item.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className={`font-bold text-base ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                        {item.name}
+                      </h3>
+                      {item.category && (() => {
+                        const Icon = getCategoryIcon(item.category);
+                        return <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />;
+                      })()}
+                    </div>
 
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {item.category && (
@@ -314,8 +329,15 @@ const SharedListView = () => {
                         </div>
                       )}
                       {item.quantity && item.unit && (
-                        <div className="text-[11px]">
-                          {item.quantity} {item.unit === "un" ? "un" : item.unit}
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">Qtd:</span>
+                          <span>{item.quantity} {item.unit}</span>
+                        </div>
+                      )}
+                      {item.expiryDate && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>Val: {new Date(item.expiryDate).toLocaleDateString('pt-BR')}</span>
                         </div>
                       )}
                     </div>
@@ -323,14 +345,26 @@ const SharedListView = () => {
 
                   {item.price && (
                     <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-lg text-primary">
-                        R$ {item.price.toFixed(2)}
-                      </p>
-                      {item.quantity && item.quantity > 1 && (
-                        <p className="text-xs text-muted-foreground">
-                          {item.quantity}x R$ {item.price.toFixed(2)}
-                        </p>
-                      )}
+                      {(() => {
+                        const allowedUnits = ['unidade', 'caixa', 'pacote'];
+                        const price = Number(item.price) || 0;
+                        const quantity = Number(item.quantity) || 1;
+                        const unit = String(item.unit || '').toLowerCase();
+                        const total = allowedUnits.includes(unit) ? price * quantity : price;
+                        
+                        return (
+                          <>
+                            <p className="font-bold text-lg text-success">
+                              R$ {total.toFixed(2)}
+                            </p>
+                            {allowedUnits.includes(unit) && quantity > 1 && (
+                              <p className="text-xs text-muted-foreground">
+                                {quantity}x R$ {price.toFixed(2)}
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -367,6 +401,58 @@ const SharedListView = () => {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="quantity" className="text-sm font-semibold">Quantidade</Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setNewItemQuantity(Math.max(1, newItemQuantity - 1))}
+                    className="glass border-border/50 h-10 w-10"
+                  >
+                    -
+                  </Button>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={newItemQuantity}
+                    onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                    className="glass border-border/50 text-center h-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setNewItemQuantity(newItemQuantity + 1)}
+                    className="glass border-border/50 h-10 w-10"
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="unit" className="text-sm font-semibold">Unidade</Label>
+                <Select value={newItemUnit} onValueChange={setNewItemUnit}>
+                  <SelectTrigger className="glass border-border/50 h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="glass border-border/50">
+                    <SelectItem value="unidade">Unidade</SelectItem>
+                    <SelectItem value="kg">Kg</SelectItem>
+                    <SelectItem value="g">Gramas</SelectItem>
+                    <SelectItem value="l">Litro</SelectItem>
+                    <SelectItem value="ml">ML</SelectItem>
+                    <SelectItem value="caixa">Caixa</SelectItem>
+                    <SelectItem value="pacote">Pacote</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="price" className="text-sm font-semibold">Preço (R$)</Label>
               <Input
@@ -379,6 +465,28 @@ const SharedListView = () => {
                 placeholder="0.00"
                 className="glass border-border/50 h-11"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria (opcional)</Label>
+              <Select value={newItemCategory} onValueChange={setNewItemCategory}>
+                <SelectTrigger className="glass border-border/50">
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent className="glass border-border/50">
+                  {categories.map((cat) => {
+                    const Icon = getCategoryIcon(cat);
+                    return (
+                      <SelectItem key={cat} value={cat}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4" />
+                          <span>{cat}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
@@ -403,20 +511,15 @@ const SharedListView = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Categoria (opcional)</Label>
-              <Select value={newItemCategory} onValueChange={setNewItemCategory}>
-                <SelectTrigger className="glass border-border/50">
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent className="glass border-border/50">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isRecurring"
+                checked={newItemIsRecurring}
+                onCheckedChange={(checked) => setNewItemIsRecurring(checked as boolean)}
+              />
+              <Label htmlFor="isRecurring" className="cursor-pointer text-sm">
+                Item de compra recorrente
+              </Label>
             </div>
 
             <Alert className="glass border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/10">

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useSupermarkets } from "@/hooks/useSupermarkets";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingItem } from "@/types/shopping";
+import { getCategoryIcon } from "@/utils/categoryIcons";
 
 const categories = [
   "Grãos e Cereais",
@@ -128,11 +129,17 @@ const EditItemDialog = ({ open, onOpenChange, onEditItem, item, listTitle }: Edi
                 <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
               <SelectContent className="glass border-border/50">
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
+                {categories.map((cat) => {
+                  const Icon = getCategoryIcon(cat);
+                  return (
+                    <SelectItem key={cat} value={cat}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4" />
+                        <span>{cat}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
