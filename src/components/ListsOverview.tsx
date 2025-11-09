@@ -96,7 +96,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList, o
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 glass text-xs sm:text-sm text-foreground hover:text-primary hover:border-primary"
+            className="flex-1 glass text-xs sm:text-sm text-foreground hover:text-white"
             onClick={(e) => {
               e.stopPropagation();
               onEditList(list.id);
@@ -108,7 +108,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList, o
           <Button
             variant="destructive"
             size="sm"
-            className="glass text-xs sm:text-sm"
+            className="glass text-xs sm:text-sm text-foreground hover:text-white"
             onClick={(e) => {
               e.stopPropagation();
               onDeleteList(list.id);

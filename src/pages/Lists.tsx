@@ -265,9 +265,9 @@ const Lists = () => {
                 <Settings className='w-4 h-4 sm:w-5 sm:h-5' />
               </Button>
               <Button
-                variant='default'
+                variant='outline'
                 size='icon'
-                className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10 shadow-glow hover:shadow-xl transition-all duration-300'
+                className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10 transition-all duration-300'
                 onClick={() => {
                   if (!currentListId) return toast.error('Abra uma lista antes de compartilhar');
                   setSelectedListForShare(currentListId);
