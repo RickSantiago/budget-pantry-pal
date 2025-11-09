@@ -18,10 +18,11 @@ import {
   Target,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ShoppingList, PantryItem, ShoppingItem } from "@/types/shopping";
 import BottomNavigation from "@/components/BottomNavigation";
 import CategoryChart from "@/components/CategoryChart";
+import AddSuggestionToListDialog from "@/components/AddSuggestionToListDialog";
 
 // Firebase and hooks
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -33,6 +34,10 @@ import { differenceInDays, parseISO, startOfMonth } from "date-fns";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, loadingAuth] = useAuthState(auth);
+  
+  // Dialog State
+  const [isSuggestionDialogOpen, setSuggestionDialogOpen] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<ShoppingItem | null>(null);
 
   // --- Data Fetching from Firestore ---
   const [listsSnapshot, loadingLists] = useCollection(
@@ -45,6 +50,7 @@ const Dashboard = () => {
 
   // --- Data Processing ---
   const {
+    lists,
     totalItemsInAllLists,
     purchasedItemsInAllLists,
     purchasedPercentage,
@@ -57,7 +63,7 @@ const Dashboard = () => {
   } = useMemo(() => {
     const lists: ShoppingList[] = listsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingList)) || [];
     
-    const allItems = lists.flatMap(list => list.items);
+    const allItems: ShoppingItem[] = lists.flatMap(list => list.items.map(item => ({...item, listCreatedAt: list.createdAt})));
     const totalItemsInAllLists = allItems.length;
     const purchasedItemsInAllLists = allItems.filter(item => item.checked).length;
     const purchasedPercentage = totalItemsInAllLists > 0 ? Math.round((purchasedItemsInAllLists / totalItemsInAllLists) * 100) : 0;
@@ -73,13 +79,14 @@ const Dashboard = () => {
     const pantryItems: PantryItem[] = pantrySnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as PantryItem)) || [];
     
     const expiringItems = pantryItems.filter(item => {
+      if (!item.expiryDate) return false;
       const daysUntilExpiry = differenceInDays(parseISO(item.expiryDate), new Date());
       return daysUntilExpiry >= 0 && daysUntilExpiry <= 7;
     }).length;
 
     const alerts: string[] = [];
     const soonestExpiringItem = pantryItems
-      .filter(item => differenceInDays(parseISO(item.expiryDate), new Date()) >= 0)
+      .filter(item => item.expiryDate && differenceInDays(parseISO(item.expiryDate), new Date()) >= 0)
       .sort((a, b) => parseISO(a.expiryDate).getTime() - parseISO(b.expiryDate).getTime())[0];
 
     if (soonestExpiringItem) {
@@ -107,9 +114,11 @@ const Dashboard = () => {
     });
 
     const monthlyBudget = userData?.monthlyBudget || 0;
-    if (monthlyBudget > 0 && totalMonthlySpending > monthlyBudget * 0.8) {
+    if (monthlyBudget > 0 && totalMonthlySpending > monthlyBudget * 0.8 && totalMonthlySpending < monthlyBudget) {
         const percentageSpent = (totalMonthlySpending / monthlyBudget) * 100;
         alerts.push(`- Você já utilizou ${percentageSpent.toFixed(0)}% do seu orçamento mensal.`);
+    } else if (totalMonthlySpending > monthlyBudget) {
+        alerts.push(`- Você ultrapassou seu orçamento mensal em R$ ${(totalMonthlySpending - monthlyBudget).toFixed(2)}.`);
     }
 
     const categorySpending = Object.keys(categorySpendingMap).map(name => ({ name, value: categorySpendingMap[name] })).sort((a, b) => b.value - a.value);
@@ -118,13 +127,30 @@ const Dashboard = () => {
       alerts.push("Nenhuma notificação importante no momento.");
     }
     
-    const recurringItems = lists.flatMap(list => list.items).filter(item => item.isRecurring && !item.checked);
-    const suggestions = [...new Set(recurringItems.map(item => item.name))];
+    // New Suggestion Logic
+    const itemFrequency: { [name: string]: number } = {};
+    allItems.forEach(item => {
+      itemFrequency[item.name] = (itemFrequency[item.name] || 0) + 1;
+    });
 
-    return { totalItemsInAllLists, purchasedItemsInAllLists, purchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
+    const sortedPopularItems = Object.keys(itemFrequency).sort((a, b) => itemFrequency[b] - itemFrequency[a]);
+    
+    const suggestions: ShoppingItem[] = sortedPopularItems.slice(0, 5).map(itemName => {
+        const mostRecentVersion = allItems
+            .filter(item => item.name === itemName)
+            .sort((a, b) => (b.listCreatedAt?.seconds || 0) - (a.listCreatedAt?.seconds || 0))[0];
+        return mostRecentVersion;
+    });
+
+    return { lists, totalItemsInAllLists, purchasedItemsInAllLists, purchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
 
   }, [listsSnapshot, pantrySnapshot, userData]);
   
+  const handleAddSuggestion = (item: ShoppingItem) => {
+    setSelectedSuggestion(item);
+    setSuggestionDialogOpen(true);
+  }
+
   const summaryCards = [
     { icon: List, title: "Itens nas Listas", value: totalItemsInAllLists, color: "text-green-500", bgColor: "bg-green-500/10" },
     { icon: CheckCircle, title: "Itens Comprados", value: `${purchasedItemsInAllLists} (${purchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
@@ -169,10 +195,7 @@ const Dashboard = () => {
 
         {monthlyBudget > 0 && (
             <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
-                <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
-                    <Target className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Controle de Orçamento Mensal
-                </h2>
+                <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><Target className="w-4 h-4 sm:w-5 sm:h-5" />Controle de Orçamento Mensal</h2>
                 <div>
                     <div className="flex justify-between text-xs sm:text-sm mb-2">
                         <span>Gasto: <span className="font-bold">R$ {totalMonthlySpending.toFixed(2)}</span></span>
@@ -184,10 +207,7 @@ const Dashboard = () => {
         )}
 
         <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
-                <PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                Gastos por Categoria (Mês Atual)
-            </h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />Gastos por Categoria (Mês Atual)</h2>
             <CategoryChart data={categorySpending} />
         </Card>
 
@@ -202,10 +222,15 @@ const Dashboard = () => {
           <Card className="glass border-border/50 p-4 sm:p-6 animate-slide-up rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />Sugestões de compras</h2>
             {suggestions.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {suggestions.map((item, index) => (<Button key={index} variant="outline" size="sm" className="glass rounded-full text-xs">{item}</Button>))}
+              <div className="space-y-2">
+                {suggestions.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between glass border border-border/50 p-2 rounded-lg">
+                    <span className="text-sm font-medium">{item.name}</span>
+                    <Button size="sm" onClick={() => handleAddSuggestion(item)}><Plus className="w-4 h-4 mr-1"/>Add</Button>
+                  </div>
+                ))}
               </div>
-            ) : <p className="text-xs sm:text-sm text-muted-foreground">Nenhuma sugestão. Marque itens como recorrentes para vê-los aqui!</p>}
+            ) : <p className="text-xs sm:text-sm text-muted-foreground">Suas sugestões aparecerão aqui conforme você usa o app.</p>}
           </Card>
         </div>
 
@@ -216,6 +241,13 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+      
+      <AddSuggestionToListDialog 
+        isOpen={isSuggestionDialogOpen}
+        onOpenChange={setSuggestionDialogOpen}
+        suggestedItem={selectedSuggestion}
+        lists={lists}
+      />
 
       <BottomNavigation />
     </div>

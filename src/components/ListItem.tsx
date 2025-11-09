@@ -3,9 +3,7 @@ import { ShoppingItem, PantryItem } from '@/types/shopping';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Edit2, Store, CalendarDays, Repeat } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { getCategoryIcon } from '@/utils/categoryIcons';
-import { getCategoryColor } from '@/utils/categoryColors';
+import { getCategoryStyle } from '@/utils/categoryMetadata';
 import AddToPantryDialog from './AddToPantryDialog';
 import { doc, setDoc, collection } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -51,8 +49,8 @@ const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
     setPantryDialogOpen(false);
   };
 
-  const CategoryIcon = getCategoryIcon(item.category);
-  const categoryColor = getCategoryColor(item.category);
+  const categoryStyle = item.category ? getCategoryStyle(item.category) : null;
+  const CategoryIcon = categoryStyle?.icon;
 
   const price = Number(item.price) || 0;
   const quantity = Number(item.quantity) || 1;
@@ -76,7 +74,14 @@ const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
             {item.name}
           </p>
 
-          <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground mt-1'>
+          {categoryStyle && CategoryIcon && (
+            <div className={`flex items-center gap-1.5 text-xs sm:text-sm mt-1.5 font-medium ${categoryStyle.color}`}>
+              <CategoryIcon size={14} />
+              <span>{item.category}</span>
+            </div>
+          )}
+
+          <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground mt-2'>
               {item.price != null && item.price > 0 && (
                   <span className='font-semibold text-primary/90'>
                       R$ {totalPrice.toFixed(2)}
@@ -114,12 +119,6 @@ const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
         </div>
 
         <div className='flex items-center gap-1 flex-shrink-0'>
-          {item.category && (
-            <Badge variant="outline" className={`hidden md:flex items-center gap-1.5 ${categoryColor}`}>
-              <CategoryIcon className="h-3.5 w-3.5" />
-              {item.category}
-            </Badge>
-          )}
           <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:h-9" onClick={() => onEdit(item.id)}>
             <Edit2 className="h-4 w-4 text-muted-foreground" />
           </Button>
