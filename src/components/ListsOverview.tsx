@@ -35,9 +35,9 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList, o
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg sm:text-xl font-bold truncate">{title}</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-foreground truncate">{title}</h3>
               {isCompleted && (
-                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                <Badge className="bg-success/10 text-success border-success/20 text-xs">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   Concluída
                 </Badge>
@@ -61,7 +61,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList, o
               <ShoppingCart className="w-3.5 h-3.5" />
               <span className="text-xs">Itens</span>
             </div>
-            <p className="text-base sm:text-lg font-bold">
+            <p className="text-base sm:text-lg font-bold text-foreground">
               {purchasedItems} / {totalItems}
             </p>
             <div className="mt-1.5 bg-muted/30 rounded-full h-1.5 overflow-hidden">
@@ -78,7 +78,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList, o
                 <DollarSign className="w-3.5 h-3.5" />
                 <span className="text-xs">Orçamento</span>
               </div>
-              <p className="text-base sm:text-lg font-bold text-primary">
+              <p className="text-base sm:text-lg font-bold text-success">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plannedBudget)}
               </p>
             </div>
@@ -96,7 +96,7 @@ const ListCard: React.FC<ListCardProps> = ({ list, onSelectList, onDeleteList, o
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 glass text-xs sm:text-sm"
+            className="flex-1 glass text-xs sm:text-sm text-foreground hover:text-primary hover:border-primary"
             onClick={(e) => {
               e.stopPropagation();
               onEditList(list.id);

@@ -247,7 +247,7 @@ const Lists = () => {
                 <ArrowLeft className='w-4 h-4 sm:w-5 sm:h-5' />
               </Button>
               <div className='flex-1 min-w-0'>
-                <h1 className='text-xl sm:text-2xl font-bold truncate mb-0.5'>{currentList.title}</h1>
+                <h1 className='text-xl sm:text-2xl font-bold text-foreground truncate mb-0.5'>{currentList.title}</h1>
                 {currentList.observation && (
                   <p className='text-xs sm:text-sm text-muted-foreground truncate'>{currentList.observation}</p>
                 )}
@@ -324,7 +324,7 @@ const Lists = () => {
           <div className='grid grid-cols-2 gap-3'>
             <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md'>
               <p className='text-xs sm:text-sm text-muted-foreground mb-1'>Gasto Atual</p>
-              <p className={`text-xl sm:text-3xl font-bold ${isOverBudget ? 'text-destructive' : 'text-primary'}`}>
+              <p className={`text-xl sm:text-3xl font-bold ${isOverBudget ? 'text-destructive' : 'text-success'}`}>
                 R$ {totalPrice.toFixed(2)}
               </p>
               <p className='text-[10px] sm:text-xs text-muted-foreground mt-1'>
@@ -335,7 +335,7 @@ const Lists = () => {
             {plannedBudget > 0 && (
               <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md'>
                 <p className='text-xs sm:text-sm text-muted-foreground mb-1'>Planejado</p>
-                <p className='text-xl sm:text-3xl font-bold'>
+                <p className='text-xl sm:text-3xl font-bold text-foreground'>
                   R$ {plannedBudget.toFixed(2)}
                 </p>
                 <div className='mt-2'>
@@ -361,7 +361,7 @@ const Lists = () => {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
-              className='glass border-border/50 rounded-lg px-2 py-1 text-sm'
+              className='glass border-border/50 rounded-lg px-2 py-1 text-sm text-foreground bg-background'
             >
               <option value='Todos'>Todos</option>
               {[...new Set(items.map(i => i.category).filter(Boolean))].map(cat => (
