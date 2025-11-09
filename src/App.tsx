@@ -15,6 +15,7 @@ import Analytics from "@/pages/Analytics";
 import NotFound from "@/pages/NotFound";
 import SharedListView from "@/pages/SharedListView";
 import Profile from "@/pages/Profile";
+import Pantry from "@/pages/Pantry";
 
 // Layout para rotas autenticadas
 const ProtectedLayout = () => {
@@ -61,6 +62,7 @@ const App = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lists" element={<Lists />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/pantry" element={<Pantry />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
           

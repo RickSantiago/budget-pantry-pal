@@ -29,3 +29,16 @@ export interface ShoppingList {
   items?: ShoppingItem[];
   createdAt?: string;
 }
+
+export interface PantryItem {
+  id: string; // Firestore document ID
+  name: string;
+  category?: string;
+  quantity?: number;
+  unit?: string;
+  price?: number; // Price at the time of purchase
+  supermarket?: string;
+  purchaseDate: string; // Date the item was added to the pantry
+  expiryDate: string;   // Expiry date is mandatory for pantry items
+  ownerId: string; // To identify the owner of the item
+}
