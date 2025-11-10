@@ -16,6 +16,7 @@ import {
   Bell,
   PieChart as PieChartIcon,
   Target,
+  TrendingUp
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
@@ -29,6 +30,7 @@ import { collection, query, where, getDocs, doc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { differenceInDays, parseISO } from "date-fns";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { BudgetEvolutionChart } from "@/components/charts/BudgetEvolutionChart";
 
 
 // Criterious Date Parser: Handles timezone issues with date strings.
@@ -94,7 +96,6 @@ const Dashboard = () => {
                 
                 const listData = { ...doc.data(), id: doc.id } as ShoppingList;
                 
-                // Fetch items for each list
                 const itemsCollection = collection(db, 'lists', doc.id, 'items');
                 const itemsSnapshot = await getDocs(itemsCollection);
                 listData.items = itemsSnapshot.docs.map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id } as ShoppingItem));
@@ -290,6 +291,11 @@ const Dashboard = () => {
                 </div>
             </Card>
         )}
+
+        <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />Evolução do Orçamento Mensal</h2>
+            <BudgetEvolutionChart />
+        </Card>
 
         <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />{`Gastos por Categoria (${currentMonthName})`}</h2>

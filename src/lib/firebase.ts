@@ -1,27 +1,24 @@
-import { initializeApp, getApps, type FirebaseOptions, type FirebaseApp } from "firebase/app";
+import { initializeApp, getApps, FirebaseApp, FirebaseOptions } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFunctions } from "firebase/functions"; // Importar getFunctions
 
-// Read config from Vite env vars (VITE_FIREBASE_*)
+// Suas credenciais do Firebase que já estavam aqui
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Validate Firebase configuration
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  console.error("Firebase configuration is incomplete. Please check your environment variables.");
-}
-
 let app: FirebaseApp;
+
 if (!getApps().length) {
   try {
     app = initializeApp(firebaseConfig as FirebaseOptions);
-    console.log("Firebase initialized successfully");
   } catch (error) {
     console.error("Error initializing Firebase:", error);
     throw error;
@@ -32,5 +29,6 @@ if (!getApps().length) {
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const functions = getFunctions(app, 'southamerica-east1'); // Inicializar e exportar functions
 export const googleProvider = new GoogleAuthProvider();
 export default app;
