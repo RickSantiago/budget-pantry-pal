@@ -26,7 +26,7 @@ function ReloadPrompt() {
 
   useEffect(() => {
     if (needRefresh) {
-      const toastId = toast("Nova versão disponível!", {
+      toast("Nova versão disponível!", {
         action: (
           <Button
             size="sm"
@@ -37,9 +37,6 @@ function ReloadPrompt() {
         ),
         duration: Infinity, // Mantém o toast visível até ser dispensado
       });
-
-      // Função para dispensar o toast quando o componente for desmontado
-      return () => toast.dismiss(toastId);
     }
   }, [needRefresh, updateServiceWorker]);
 

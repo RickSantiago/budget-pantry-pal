@@ -18,6 +18,7 @@ export interface ShoppingList {
   date?: string;
   plannedBudget?: number;
   totalSpent?: number;
+  isPinned?: boolean;
   // backward-compatible owner fields — some files used `owner` and others `ownerId`
   owner?: string;
   ownerId?: string;

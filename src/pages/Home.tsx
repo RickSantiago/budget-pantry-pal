@@ -186,13 +186,11 @@ const Home = () => {
         onConfirm={handleDeleteList} 
       />
 
-      {selectedList && (
-        <ShareListDialog 
-          list={selectedList} 
-          isOpen={isShareDialogOpen} 
-          onClose={closeShareDialog} 
-        />
-      )}
+      <ShareListDialog 
+        open={isShareDialogOpen} 
+        onOpenChange={(open) => !open && closeShareDialog()}
+        listId={selectedList?.id || null}
+      />
     </div>
   );
 };
