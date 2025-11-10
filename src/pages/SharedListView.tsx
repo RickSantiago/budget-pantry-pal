@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc, deleteField } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc, deleteDoc, deleteField } from 'firebase/firestore';
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Check, Plus, Repeat2, MapPin, Calendar, Pencil } from 'lucide-react';
+import { Info, Check, Plus, Repeat2, MapPin, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { getCategoryIcon } from '@/utils/categoryIcons';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +14,17 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EditItemDialog from '@/components/EditItemDialog';
@@ -73,6 +84,9 @@ const SharedListView = () => {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<ShoppingItem | null>(null);
 
   const isOwner = user && list?.ownerId === user.uid;
   const isCollaborator = user && Array.isArray(list?.sharedWith) && list.sharedWith.includes(user.email || '');
@@ -204,6 +218,26 @@ const SharedListView = () => {
   const handleOpenEditDialog = (item: ShoppingItem) => {
     setEditingItem(item);
     setIsEditDialogOpen(true);
+  };
+  
+  const handleOpenDeleteDialog = (item: ShoppingItem) => {
+    setItemToDelete(item);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteItem = async () => {
+    if (!listId || !itemToDelete) return;
+
+    try {
+      const itemRef = doc(db, 'lists', listId, 'items', itemToDelete.id);
+      await deleteDoc(itemRef);
+      toast.success(`"${itemToDelete.name}" foi removido.`);
+      setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Error deleting item:', err);
+      toast.error('Erro ao remover item.');
+    }
   };
 
   const handleEditItem = async (updatedItem: ShoppingItem) => {
@@ -426,9 +460,14 @@ const SharedListView = () => {
                         </div>
                     )}
                     {(isOwner || isCollaborator) && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(item)}>
-                            <Pencil className="w-4 h-4" />
-                        </Button>
+                        <div className='flex items-center'>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(item)}>
+                              <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleOpenDeleteDialog(item)}>
+                              <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                     )}
                   </div>
                 </div>
@@ -624,6 +663,22 @@ const SharedListView = () => {
             listTitle={list.title}
         />
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso removerá permanentemente o item
+              "{itemToDelete?.name}" da sua lista.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

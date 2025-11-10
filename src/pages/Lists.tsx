@@ -24,6 +24,16 @@ import {
   AlertTriangle,
   Users,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ThemeToggle } from '@/components/ThemeToggle';
 import BottomNavigation from '@/components/BottomNavigation';
 import ListItem from '@/components/ListItem';
@@ -52,6 +62,8 @@ const Lists = () => {
   const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
   const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<ShoppingItem | null>(null);
   const [selectedListForShare, setSelectedListForShare] = useState<string | null>(null);
   const [user, userLoading] = useAuthState(auth);
   const [sortAZ, setSortAZ] = useState(false);
@@ -201,6 +213,27 @@ const Lists = () => {
     if (item) {
       setEditingItem(item);
       setIsEditDialogOpen(true);
+    }
+  };
+  
+  const handleOpenDeleteDialog = (itemId: string) => {
+    const item = items.find((i) => i.id === itemId);
+    if (item) {
+      setItemToDelete(item);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteItem = async () => {
+    if (!currentListId || !itemToDelete) return;
+    try {
+      await deleteDoc(doc(db, "lists", currentListId, "items", itemToDelete.id));
+      toast.success(`Item "${itemToDelete.name}" removido com sucesso.`);
+      setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
+    } catch (error) {
+      toast.error("Erro ao remover o item.");
+      console.error("Error deleting item: ", error);
     }
   };
 
@@ -479,6 +512,7 @@ const Lists = () => {
                     item={item}
                     onToggle={handleToggleItem}
                     onEdit={handleOpenEditDialog}
+                    onDelete={handleOpenDeleteDialog}
                   />
                 </div>
               ))
@@ -515,6 +549,21 @@ const Lists = () => {
         onOpenChange={setIsShareDialogOpen}
         listId={selectedListForShare}
       />
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso removerá permanentemente o item "{itemToDelete?.name}" da sua lista.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

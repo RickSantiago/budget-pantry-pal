@@ -1,7 +1,7 @@
 import { ShoppingItem } from '@/types/shopping';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Edit2, Store, CalendarDays, Repeat } from 'lucide-react';
+import { Edit2, Store, CalendarDays, Repeat, Trash2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { getCategoryStyle } from '@/utils/categoryMetadata';
 
@@ -9,9 +9,10 @@ interface ListItemProps {
   item: ShoppingItem;
   onToggle: (id: string) => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void; // Added onDelete prop
 }
 
-const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
+const ListItem = ({ item, onToggle, onEdit, onDelete }: ListItemProps) => {
 
   const handleCheckboxChange = () => {
     onToggle(item.id);
@@ -92,6 +93,9 @@ const ListItem = ({ item, onToggle, onEdit }: ListItemProps) => {
       <div className='flex items-center gap-1 flex-shrink-0'>
         <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:h-9" onClick={() => onEdit(item.id)}>
           <Edit2 className="h-4 w-4 text-muted-foreground" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:h-9" onClick={() => onDelete(item.id)}>
+          <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
       </div>
     </div>

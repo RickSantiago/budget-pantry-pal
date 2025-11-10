@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, useLocation, Outlet } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
@@ -16,6 +15,7 @@ import NotFound from "@/pages/NotFound";
 import SharedListView from "@/pages/SharedListView";
 import Profile from "@/pages/Profile";
 import Pantry from "@/pages/Pantry";
+import ReloadPrompt from "@/components/ReloadPrompt"; // Importa o componente
 
 // Layout para rotas autenticadas
 const ProtectedLayout = () => {
@@ -48,8 +48,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <Toaster />
         <Sonner />
+        <ReloadPrompt /> {/* Adiciona o componente aqui */}
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Index />} />
