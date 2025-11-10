@@ -50,10 +50,10 @@ const Dashboard = () => {
 
   // --- Data Processing ---
   const {
-    lists,
-    totalItemsInAllLists,
-    purchasedItemsInAllLists,
-    purchasedPercentage,
+    allTimeLists,
+    totalMonthlyItems,
+    purchasedMonthlyItems,
+    monthlyPurchasedPercentage,
     expiringItems,
     alerts,
     suggestions,
@@ -63,27 +63,36 @@ const Dashboard = () => {
   } = useMemo(() => {
     const allTimeLists: ShoppingList[] = listsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingList)) || [];
     
-    // Filter for lists from the current month
+    // --- Monthly Data Calculation (for Dashboard) ---
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    const lists = allTimeLists.filter(list => {
-      // Prioritize the 'date' field as requested
-      if (list.date) {
-        const listDate = parseISO(list.date);
-        return listDate.getMonth() === currentMonth && listDate.getFullYear() === currentYear;
+    const getDateFromSource = (dateSource: any): Date | null => {
+      if (!dateSource) return null;
+      // Handle Firestore Timestamp
+      if (typeof dateSource.toDate === 'function') { 
+        return dateSource.toDate();
       }
-      // Fallback to 'createdAt' for older lists
-      const listTimestamp = list.createdAt as any;
-      const listCreationDate = listTimestamp?.toDate ? listTimestamp.toDate() : new Date(listTimestamp as string);
-      return listCreationDate.getMonth() === currentMonth && listCreationDate.getFullYear() === currentYear;
+      // Handle ISO 8601 string
+      if (typeof dateSource === 'string') {
+        const parsedDate = parseISO(dateSource);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate;
+        }
+      }
+      return null;
+    };
+
+    const monthlyLists = allTimeLists.filter(list => {
+      const listDate = getDateFromSource(list.date) || getDateFromSource(list.createdAt);
+      return listDate ? listDate.getMonth() === currentMonth && listDate.getFullYear() === currentYear : false;
     });
     
-    const allItems: ShoppingItem[] = lists.flatMap(list => list.items.map(item => ({...item, listCreatedAt: list.createdAt})));
-    const totalItemsInAllLists = allItems.length;
-    const purchasedItemsInAllLists = allItems.filter(item => item.checked).length;
-    const purchasedPercentage = totalItemsInAllLists > 0 ? Math.round((purchasedItemsInAllLists / totalItemsInAllLists) * 100) : 0;
+    const monthlyItems: ShoppingItem[] = monthlyLists.flatMap(list => list.items);
+    const totalMonthlyItems = monthlyItems.length;
+    const purchasedMonthlyItems = monthlyItems.filter(item => item.checked).length;
+    const monthlyPurchasedPercentage = totalMonthlyItems > 0 ? Math.round((purchasedMonthlyItems / totalMonthlyItems) * 100) : 0;
     
     const calculateItemPrice = (item: ShoppingItem) => {
       const price = Number(item.price) || 0;
@@ -96,7 +105,7 @@ const Dashboard = () => {
     let totalMonthlySpending = 0;
     const categorySpendingMap: { [key: string]: number } = {};
 
-    lists.forEach(list => {
+    monthlyLists.forEach(list => {
         list.items.forEach(item => {
             if (item.checked) {
                 const itemPrice = calculateItemPrice(item);
@@ -107,6 +116,9 @@ const Dashboard = () => {
         });
     });
 
+    const categorySpending = Object.keys(categorySpendingMap).map(name => ({ name, value: categorySpendingMap[name] })).sort((a, b) => b.value - a.value);
+
+    // --- Pantry & Alerts Calculation (Independent of Lists) ---
     const pantryItems: PantryItem[] = pantrySnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as PantryItem)) || [];
     
     const expiringItems = pantryItems.filter(item => {
@@ -132,13 +144,12 @@ const Dashboard = () => {
     } else if (totalMonthlySpending > monthlyBudget) {
         alerts.push(`- Você ultrapassou seu orçamento mensal em R$ ${(totalMonthlySpending - monthlyBudget).toFixed(2)}.`);
     }
-
-    const categorySpending = Object.keys(categorySpendingMap).map(name => ({ name, value: categorySpendingMap[name] })).sort((a, b) => b.value - a.value);
-
+    
     if (alerts.length === 0) {
       alerts.push("Nenhuma notificação importante no momento.");
     }
-    
+
+    // --- All-Time Data Calculation (for Suggestions) ---
     const allTimeItems: ShoppingItem[] = allTimeLists.flatMap(list => list.items.map(item => ({...item, listCreatedAt: list.createdAt})));
     const itemFrequency: { [name: string]: number } = {};
     allTimeItems.forEach(item => {
@@ -154,7 +165,7 @@ const Dashboard = () => {
         return mostRecentVersion;
     });
 
-    return { lists: allTimeLists, totalItemsInAllLists, purchasedItemsInAllLists, purchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
+    return { allTimeLists, totalMonthlyItems, purchasedMonthlyItems, monthlyPurchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
 
   }, [listsSnapshot, pantrySnapshot, userData]);
   
@@ -164,8 +175,8 @@ const Dashboard = () => {
   }
 
   const summaryCards = [
-    { icon: List, title: "Itens no Mês", value: totalItemsInAllLists, color: "text-green-500", bgColor: "bg-green-500/10" },
-    { icon: CheckCircle, title: "Comprados no Mês", value: `${purchasedItemsInAllLists} (${purchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { icon: List, title: "Itens no Mês", value: totalMonthlyItems, color: "text-green-500", bgColor: "bg-green-500/10" },
+    { icon: CheckCircle, title: "Comprados no Mês", value: `${purchasedMonthlyItems} (${monthlyPurchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
     { icon: Wallet, title: "Gasto Total (Mês)", value: `R$ ${totalMonthlySpending.toFixed(2)}`, color: "text-amber-500", bgColor: "bg-amber-500/10" },
     { icon: AlertTriangle, title: "Próximos do Venc.", value: expiringItems, color: "text-red-500", bgColor: "bg-red-500/10", action: () => navigate('/pantry') },
   ];
@@ -258,7 +269,7 @@ const Dashboard = () => {
         isOpen={isSuggestionDialogOpen}
         onOpenChange={setSuggestionDialogOpen}
         suggestedItem={selectedSuggestion}
-        lists={lists}
+        lists={allTimeLists}
       />
 
       <BottomNavigation />
