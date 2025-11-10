@@ -78,8 +78,7 @@ export const BudgetEvolutionChart = () => {
                 ) : (
                     <div className="flex items-center justify-center h-72">
                         <p className="text-sm text-center text-muted-foreground">
-                            Não há dados de evolução. <br/>
-                            Altere seu orçamento na tela de perfil pelo menos duas vezes para ver o gráfico.
+                        Ainda não há dados de evolução. <br/> O gráfico será gerado aqui a partir do seu segundo registro de orçamento.
                         </p>
                     </div>
                 )}
