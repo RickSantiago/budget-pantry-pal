@@ -12,7 +12,7 @@ import {
   BarChart,
   Plus,
   User,
-  ShoppingBag,
+  Archive,
   Bell,
   PieChart as PieChartIcon,
   Target,
@@ -245,8 +245,8 @@ const Dashboard = () => {
   ];
 
   const quickActions = [
-    { icon: ShoppingBag, text: "Ver Listas", action: () => navigate("/lists") },
-    { icon: ShoppingCart, text: "Ver Despensa", action: () => navigate("/pantry") },
+    { icon: List, text: "Ver Listas", action: () => navigate("/lists") },
+    { icon: Archive, text: "Ver Despensa", action: () => navigate("/pantry") },
     { icon: BarChart, text: "Análises", action: () => navigate('/analytics') },
     { icon: User, text: "Perfil", action: () => navigate('/profile') },
   ];

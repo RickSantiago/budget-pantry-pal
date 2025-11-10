@@ -6,7 +6,7 @@ import { doc, getDoc, updateDoc, collection, onSnapshot, addDoc, deleteDoc, dele
 import { ShoppingList, ShoppingItem } from '@/types/shopping';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Check, Plus, Repeat2, MapPin, Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Info, Check, Plus, Repeat2, MapPin, Calendar, Pencil, Trash2, Star } from 'lucide-react';
 import { getCategoryIcon } from '@/utils/categoryIcons';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
@@ -28,23 +28,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EditItemDialog from '@/components/EditItemDialog';
-
-const categories = [
-  "Grãos e Cereais",
-  "Carnes",
-  "Hortifrúti",
-  "Laticínios",
-  "Padaria e Massas",
-  "Bebidas",
-  "Doces e Snacks",
-  "Congelados",
-  "Molhos e Condimentos",
-  "Limpeza",
-  "Higiene",
-  "Frios",
-  "Oleos e Gorduras",
-  "Outros"
-];
+import { categories } from '@/constants/shopping';
 
 const getCategoryColor = (category?: string): string => {
   const colors: Record<string, string> = {
@@ -81,6 +65,7 @@ const SharedListView = () => {
   const [newItemQuantity, setNewItemQuantity] = useState(1);
   const [newItemUnit, setNewItemUnit] = useState('unidade');
   const [newItemIsRecurring, setNewItemIsRecurring] = useState(false);
+  const [newItemIsOptional, setNewItemIsOptional] = useState(false);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
@@ -173,6 +158,7 @@ const SharedListView = () => {
         unit: newItemUnit,
         checked: false,
         isRecurring: newItemIsRecurring,
+        isOptional: newItemIsOptional,
     };
 
     if (newItemPrice) {
@@ -207,6 +193,7 @@ const SharedListView = () => {
       setNewItemQuantity(1);
       setNewItemUnit('unidade');
       setNewItemIsRecurring(false);
+      setNewItemIsOptional(false);
       setIsAddDialogOpen(false);
       toast.success('Item adicionado com sucesso!');
     } catch (err) {
@@ -408,6 +395,12 @@ const SharedListView = () => {
                         <Badge variant="secondary" className="text-xs font-medium bg-primary/10 text-primary dark:bg-primary/20">
                           <Repeat2 className="w-3 h-3 mr-1" />
                           Recorrente
+                        </Badge>
+                      )}
+                       {item.isOptional && (
+                        <Badge variant="outline" className="text-xs font-medium text-muted-foreground">
+                          <Star className="w-3 h-3 mr-1" />
+                          Opcional
                         </Badge>
                       )}
                     </div>
@@ -624,6 +617,16 @@ const SharedListView = () => {
               />
               <Label htmlFor="isRecurring" className="cursor-pointer text-sm">
                 Item de compra recorrente
+              </Label>
+            </div>
+             <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isOptional"
+                checked={newItemIsOptional}
+                onCheckedChange={(checked) => setNewItemIsOptional(checked as boolean)}
+              />
+              <Label htmlFor="isOptional" className="cursor-pointer text-sm">
+                Item opcional
               </Label>
             </div>
 

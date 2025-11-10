@@ -9,6 +9,7 @@ export interface ShoppingItem {
   supermarket?: string;
   expiryDate?: string;
   isRecurring?: boolean;
+  isOptional?: boolean;
 }
 
 export interface ShoppingList {
