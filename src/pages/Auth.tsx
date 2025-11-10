@@ -121,7 +121,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 pb-24">
-      <AppHeader title="Market Match" hideThemeToggle />
+      {/* <AppHeader title="Market Match" hideThemeToggle /> */}
 
       <div className="w-full max-w-md mx-auto animate-fade-in py-8">
         <div className="text-center mb-6 sm:mb-8 animate-slide-up">

@@ -83,7 +83,7 @@ const ListsOverview = ({ lists, onSelectList, onCreateList, onDeleteList, onEdit
                             </CardContent>
                         </div>
                         <CardContent className="pt-0">
-                             <Button variant="outline" className="w-full glass hover:bg-primary/10 border-primary/20 hover:border-primary/50">
+                             <Button variant="outline" className="w-full glass border-secondary/20 text-primary">
                                 Ver detalhes <ChevronRight className="w-4 h-4 ml-2" />
                             </Button>
                         </CardContent>
