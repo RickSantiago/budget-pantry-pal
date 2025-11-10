@@ -1,4 +1,4 @@
-// Forcing a re-render to break cache - v3
+// Forcing a re-render to break cache - v6
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { LogOut, ArrowLeft, Settings, Save, Wallet, User as UserIcon, Camera } from "lucide-react";
+import { LogOut, Settings, Save, Wallet, User as UserIcon, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -21,7 +21,7 @@ import GamificationCard from "@/components/GamificationCard";
 import NotificationSettingsCard from "@/components/NotificationSettingsCard";
 import DataManagementCard from "@/components/DataManagementCard";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
-
+import AppHeader from "@/components/AppHeader";
 import { createAvatar } from '@dicebear/core';
 import { adventurer } from '@dicebear/collection';
 import AvatarPickerDialog, { avatarSeeds } from "@/components/AvatarPickerDialog";
@@ -40,12 +40,8 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isAvatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState({
-    expiryNotifications: true,
-    budgetAlerts: true,
-    weeklySummary: false,
-  });
-  const [currentAvatar, setCurrentAvatar] = useState(""); // << CORREÇÃO: Estado local para o avatar
+  const [notificationSettings, setNotificationSettings] = useState({ expiryNotifications: true, budgetAlerts: true, weeklySummary: false });
+  const [currentAvatar, setCurrentAvatar] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -54,9 +50,8 @@ const Profile = () => {
       return;
     }
 
-    // Sincronizar estados com o objeto user
     setName(user.displayName || "");
-    setCurrentAvatar(user.photoURL || ""); // << CORREÇÃO: Inicializa o estado do avatar
+    setCurrentAvatar(user.photoURL || "");
 
     const fetchAllData = async () => {
       setIsLoadingData(true);
@@ -80,18 +75,13 @@ const Profile = () => {
 
         const fetchedLists: ShoppingList[] = [];
         const listIds = new Set<string>();
-        const processDoc = (doc: any) => {
-          if (listIds.has(doc.id)) return;
-          listIds.add(doc.id);
-          fetchedLists.push({ ...doc.data(), id: doc.id } as ShoppingList);
-        };
+        const processDoc = (d: any) => { if (!listIds.has(d.id)) { listIds.add(d.id); fetchedLists.push({ ...d.data(), id: d.id } as ShoppingList); } };
         ownerSnapshot.docs.forEach(processDoc);
         sharedSnapshot.docs.forEach(processDoc);
         setAllLists(fetchedLists);
 
-        setPantryItems(pantrySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PantryItem)));
-
-        const fetchedBudgetHistory = budgetHistorySnapshot.docs.map(doc => doc.data());
+        setPantryItems(pantrySnapshot.docs.map(d => ({ ...d.data(), id: d.id } as PantryItem)));
+        const fetchedBudgetHistory = budgetHistorySnapshot.docs.map(d => d.data());
         setBudgetHistory(fetchedBudgetHistory);
 
         if (fetchedBudgetHistory.length > 0) {
@@ -112,7 +102,7 @@ const Profile = () => {
     if (!user) return;
     try {
       await updateProfile(user, { photoURL: seed });
-      setCurrentAvatar(seed); // << CORREÇÃO: Atualiza o estado local para re-renderização imediata
+      setCurrentAvatar(seed);
       toast.success("Avatar atualizado com sucesso!");
     } catch (error) {
       console.error("Erro ao atualizar avatar:", error);
@@ -148,7 +138,6 @@ const Profile = () => {
         const userRef = doc(db, 'users', user.uid);
         await setDoc(userRef, { monthlyBudget: budgetValue }, { merge: true });
       }
-
       toast.success("Configurações salvas com sucesso!");
     } catch (error) {
       console.error("Erro ao salvar configurações:", error);
@@ -159,13 +148,7 @@ const Profile = () => {
 
   const handleExportData = () => {
     if (!user) return;
-    const dataToExport = {
-      userInfo: { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL, createdAt: user.metadata.creationTime },
-      lists: allLists,
-      pantry: pantryItems,
-      budgetHistory: budgetHistory,
-      notificationSettings: notificationSettings,
-    };
+    const dataToExport = { userInfo: { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL, createdAt: user.metadata.creationTime }, lists: allLists, pantry: pantryItems, budgetHistory, notificationSettings };
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(dataToExport, null, 2))}`;
     const link = document.createElement("a");
     link.href = jsonString;
@@ -197,13 +180,9 @@ const Profile = () => {
   if (!user) return null;
 
   const getAvatarUrl = () => {
-    const photo = currentAvatar; // << CORREÇÃO: Usa o estado local como fonte da verdade
+    const photo = currentAvatar;
     if (photo && avatarSeeds.includes(photo)) {
-      const avatarSvg = createAvatar(adventurer, {
-        seed: photo,
-        size: 96,
-        backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf']
-      }).toString();
+      const avatarSvg = createAvatar(adventurer, { seed: photo, size: 96, backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'] }).toString();
       return `data:image/svg+xml,${encodeURIComponent(avatarSvg)}`;
     }
     return photo || "";
@@ -215,13 +194,10 @@ const Profile = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
-        <div className="glass sticky top-0 z-10 border-b border-border/50 backdrop-blur-lg">
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="rounded-full"><ArrowLeft className="w-5 h-5" /></Button>
-            <h1 className="text-xl font-bold">Meu Perfil</h1>
-            <ThemeToggle />
-          </div>
-        </div>
+        <AppHeader
+          title="Meu Perfil"
+          subtitle="Gerencie suas informações e preferências"
+        />
 
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
           <Card className="glass border-border/50 p-6 shadow-md">

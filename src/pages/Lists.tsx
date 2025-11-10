@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
 import {
@@ -23,6 +24,7 @@ import {
   X,
   AlertTriangle,
   Users,
+  Download,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -34,6 +36,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ThemeToggle } from '@/components/ThemeToggle';
 import BottomNavigation from '@/components/BottomNavigation';
 import ListItem from '@/components/ListItem';
@@ -64,13 +74,13 @@ const Lists = () => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<ShoppingItem | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [selectedListForShare, setSelectedListForShare] = useState<string | null>(null);
   const [user, userLoading] = useAuthState(auth);
   const [sortAZ, setSortAZ] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('Todos');
   const [showBudgetAlert, setShowBudgetAlert] = useState(true);
 
-  // Fetch lists from Firestore
   useEffect(() => {
     if (userLoading) {
       setLoading(true);
@@ -92,7 +102,7 @@ const Lists = () => {
         if (list.ownerId === user.uid || (Array.isArray(list.sharedWith) && list.sharedWith.includes(user.email || ''))) {
           const itemsCollection = collection(db, 'lists', list.id, 'items');
           const itemsSnapshot = await getDocs(itemsCollection);
-          const listItems = itemsSnapshot.docs.map(itemDoc => itemDoc.data() as ShoppingItem);
+          const listItems = itemsSnapshot.docs.map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id }) as ShoppingItem);
           
           list.items = listItems;
           list.totalSpent = listItems.reduce((sum, item) => {
@@ -119,7 +129,6 @@ const Lists = () => {
     return () => unsubscribe();
   }, [user, userLoading]);
 
-  // Fetch items for the current list from Firestore
   useEffect(() => {
     if (!currentListId) {
       setItems([]);
@@ -167,10 +176,8 @@ const Lists = () => {
       batch.delete(doc.ref);
     });
     await batch.commit();
-
     await deleteDoc(doc(db, 'lists', listId));
   };
-
 
   const handleToggleItem = async (id: string) => {
     if (!currentListId) return;
@@ -192,9 +199,7 @@ const Lists = () => {
   const handleEditItem = async (updatedItem: ShoppingItem) => {
     if (!currentListId || !updatedItem.id) return;
     const itemRef = doc(db, 'lists', currentListId, 'items', updatedItem.id);
-    
     const { id, ...dataToUpdate } = updatedItem;
-
     const dataForFirebase: { [key: string]: any } = {};
     for (const key in dataToUpdate) {
         const value = (dataToUpdate as any)[key];
@@ -204,7 +209,6 @@ const Lists = () => {
             dataForFirebase[key] = value;
         }
     }
-
     await updateDoc(itemRef, dataForFirebase);
   };
 
@@ -237,6 +241,49 @@ const Lists = () => {
     }
   };
 
+  const handleExportJson = () => {
+    if (!currentList) return;
+    const dataToExport = {
+      ...currentList,
+      items: items,
+    };
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+      JSON.stringify(dataToExport, null, 2)
+    )}`;
+    const link = document.createElement("a");
+    link.href = jsonString;
+    link.download = `${currentList.title.replace(/ /g, '_')}.json`;
+    link.click();
+    setIsExportDialogOpen(false);
+  };
+
+  const handleExportCsv = () => {
+    if (!currentList) return;
+    const header = ['list_title', 'list_observation', 'list_date', 'list_planned_budget', 'item_name', 'item_quantity', 'item_unit', 'item_price', 'item_category', 'item_supermarket', 'item_expiry_date', 'item_is_recurring', 'item_checked'];
+    const rows = items.map(item => [
+      `"${currentList.title}"`,
+      `"${currentList.observation || ''}"`,
+      currentList.date,
+      currentList.plannedBudget || '',
+      `"${item.name}"`,
+      item.quantity,
+      item.unit,
+      item.price || '',
+      item.category || '',
+      item.supermarket || '',
+      item.expiryDate || '',
+      item.isRecurring,
+      item.checked
+    ].join(','));
+
+    const csvString = [header.join(','), ...rows].join('\r\n');
+    const link = document.createElement("a");
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString);
+    link.download = `${currentList.title.replace(/ /g, '_')}.csv`;
+    link.click();
+    setIsExportDialogOpen(false);
+  };
+
   if (!currentListId || !currentList) {
      if (loading) {
       return (
@@ -244,11 +291,6 @@ const Lists = () => {
           <AppHeader
             title="Market Match"
             subtitle="Seu app de organização de compras"
-            rightNode={
-              <Button variant='outline' size='icon' className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10'>
-                <User className='w-4 h-4 sm:w-5 sm:h-5' />
-              </Button>
-            }
           />
           <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
@@ -278,11 +320,6 @@ const Lists = () => {
         <AppHeader
           title='Market Match'
           subtitle='Seu app de organização de compras'
-          rightNode={
-            <Button variant='outline' size='icon' className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10'>
-              <User className='w-4 h-4 sm:w-5 sm:h-5' />
-            </Button>
-          }
         />
 
         <div className='max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6'>
@@ -309,7 +346,6 @@ const Lists = () => {
     );
   }
 
-  // Calculations now use the 'items' state
   const totalItems = items.length;
   const allowedUnits = ['unidade', 'caixa', 'pacote'];
   const checkedItemsValue = items.reduce((sum, item) => {
@@ -361,6 +397,15 @@ const Lists = () => {
             </div>
 
             <div className='flex gap-2 flex-shrink-0'>
+               <Button
+                variant='outline'
+                size='icon'
+                className='glass rounded-full h-9 w-9 sm:h-10 sm:w-10 hover:border-primary/30'
+                onClick={() => setIsExportDialogOpen(true)}
+                title='Exportar Lista'
+              >
+                <Download className='w-4 h-4 sm:w-5 sm:h-5' />
+              </Button>
               <Button
                 variant='outline'
                 size='icon'
@@ -564,6 +609,23 @@ const Lists = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Exportar Lista</DialogTitle>
+            <DialogDescription>
+              Escolha o formato para exportar a lista "{currentList?.title}".
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleExportCsv}>Exportar para CSV</Button>
+            <Button onClick={handleExportJson}>Exportar para JSON</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

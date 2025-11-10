@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { parseISO } from 'date-fns';
 import BottomNavigation from '@/components/BottomNavigation';
+import AppHeader from '@/components/AppHeader'; // Import AppHeader
 
 const Pantry = () => {
   const [user] = useAuthState(auth);
@@ -61,34 +62,38 @@ const Pantry = () => {
   const sortedItems = typedPantryItems?.sort((a, b) => parseISO(a.expiryDate).getTime() - parseISO(b.expiryDate).getTime());
 
   return (
-    <div className="container mx-auto p-4 pb-20">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Minha Despensa</h1>
-        <Button onClick={() => setAddDialogOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item
-        </Button>
-      </div>
-      
-      {loading && <p>Carregando itens da despensa...</p>}
-      {error && <p className="text-red-500">Erro ao carregar itens: {error.message}</p>}
-      
-      {!loading && pantryItems?.empty && (
-        <div className="text-center py-10">
-          <p className="text-lg text-muted-foreground">Sua despensa está vazia.</p>
-          <p className="text-sm">Adicione itens da sua lista de compras ou manualmente.</p>
-        </div>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24 flex flex-col">
+      <AppHeader
+        title="Minha Despensa"
+        subtitle="Gerencie os itens que você tem em casa"
+        rightNode={
+          <Button onClick={() => setAddDialogOpen(true)} className="shadow-glow hover:shadow-xl transition-all duration-300">
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item
+          </Button>
+        }
+      />
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 w-full">
+        {loading && <p>Carregando itens da despensa...</p>}
+        {error && <p className="text-red-500">Erro ao carregar itens: {error.message}</p>}
+        
+        {!loading && pantryItems?.empty && (
+          <div className="text-center py-10">
+            <p className="text-lg text-muted-foreground">Sua despensa está vazia.</p>
+            <p className="text-sm">Adicione itens da sua lista de compras ou manualmente.</p>
+          </div>
+        )}
 
-      <div className="space-y-4">
-        {sortedItems?.map(item => (
-          <PantryListItem
-            key={item.id}
-            item={item}
-            onConsume={handleConsume}
-            onEdit={() => handleEdit(item)}
-            onDelete={handleDelete}
-          />
-        ))}
+        <div className="space-y-4">
+          {sortedItems?.map(item => (
+            <PantryListItem
+              key={item.id}
+              item={item}
+              onConsume={handleConsume}
+              onEdit={() => handleEdit(item)}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
       </div>
 
       <AddItemToPantryDialog
