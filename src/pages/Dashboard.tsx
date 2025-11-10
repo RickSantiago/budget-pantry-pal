@@ -18,39 +18,110 @@ import {
   Target,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ShoppingList, PantryItem, ShoppingItem } from "@/types/shopping";
 import BottomNavigation from "@/components/BottomNavigation";
 import CategoryChart from "@/components/CategoryChart";
 import AddSuggestionToListDialog from "@/components/AddSuggestionToListDialog";
-
-// Firebase and hooks
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
-import { collection, query, orderBy, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { differenceInDays, parseISO } from "date-fns";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+
+
+// Criterious Date Parser: Handles timezone issues with date strings.
+const getCorrectLocalDate = (dateSource: any): Date | null => {
+    if (!dateSource) return null;
+
+    let date: Date;
+
+    if (typeof dateSource.toDate === 'function') {
+        date = dateSource.toDate();
+    } else if (typeof dateSource === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateSource)) {
+            const [year, month, day] = dateSource.split('-').map(Number);
+            date = new Date(year, month - 1, day, 12, 0, 0); 
+        } else {
+            date = parseISO(dateSource);
+        }
+    } else {
+        return null;
+    }
+
+    if (date && !isNaN(date.getTime())) {
+        return date;
+    }
+
+    return null;
+};
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, loadingAuth] = useAuthState(auth);
   
-  // Dialog State
   const [isSuggestionDialogOpen, setSuggestionDialogOpen] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<ShoppingItem | null>(null);
+  const [allLists, setAllLists] = useState<ShoppingList[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // --- Data Fetching from Firestore ---
-  const [listsSnapshot, loadingLists] = useCollection(
-    user ? query(collection(db, `users/${user.uid}/lists`), orderBy("createdAt", "desc")) : null
-  );
+  // Correct Data Fetching Logic
+  useEffect(() => {
+    if (!user) {
+      setIsLoadingData(false);
+      return;
+    }
+
+    const fetchAllData = async () => {
+        setIsLoadingData(true);
+        try {
+            const ownerQuery = query(collection(db, 'lists'), where('ownerId', '==', user.uid));
+            const sharedQuery = query(collection(db, 'lists'), where('sharedWith', 'array-contains', user.email));
+
+            const [ownerSnapshot, sharedSnapshot] = await Promise.all([
+                getDocs(ownerQuery),
+                getDocs(sharedQuery)
+            ]);
+
+            const fetchedLists: ShoppingList[] = [];
+            const listIds = new Set<string>();
+
+            const processDoc = async (doc: any) => {
+                if (listIds.has(doc.id)) return;
+                listIds.add(doc.id);
+                
+                const listData = { ...doc.data(), id: doc.id } as ShoppingList;
+                
+                // Fetch items for each list
+                const itemsCollection = collection(db, 'lists', doc.id, 'items');
+                const itemsSnapshot = await getDocs(itemsCollection);
+                listData.items = itemsSnapshot.docs.map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id } as ShoppingItem));
+                
+                fetchedLists.push(listData);
+            };
+
+            for (const doc of ownerSnapshot.docs) await processDoc(doc);
+            for (const doc of sharedSnapshot.docs) await processDoc(doc);
+
+            setAllLists(fetchedLists);
+        } catch (error) {
+            console.error("Erro crítico ao buscar listas e itens:", error);
+        } finally {
+            setIsLoadingData(false);
+        }
+    };
+
+    fetchAllData();
+  }, [user]);
+
   const [pantrySnapshot, loadingPantry] = useCollection(
     user ? collection(db, `users/${user.uid}/pantry`) : null
   );
   const [userData, loadingUser] = useDocumentData(user ? doc(db, 'users', user.uid) : null);
 
-  // --- Data Processing ---
   const {
-    allTimeLists,
     totalMonthlyItems,
     purchasedMonthlyItems,
     monthlyPurchasedPercentage,
@@ -59,37 +130,22 @@ const Dashboard = () => {
     suggestions,
     categorySpending,
     totalMonthlySpending,
-    monthlyBudget
+    monthlyBudget,
+    currentMonthName,
+    currentMonthShortName
   } = useMemo(() => {
-    const allTimeLists: ShoppingList[] = listsSnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingList)) || [];
-    
-    // --- Monthly Data Calculation (for Dashboard) ---
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
+    const monthName = currentDate.toLocaleString('pt-BR', { month: 'long' });
+    const capitalizedMonthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
-    const getDateFromSource = (dateSource: any): Date | null => {
-      if (!dateSource) return null;
-      // Handle Firestore Timestamp
-      if (typeof dateSource.toDate === 'function') { 
-        return dateSource.toDate();
-      }
-      // Handle ISO 8601 string
-      if (typeof dateSource === 'string') {
-        const parsedDate = parseISO(dateSource);
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate;
-        }
-      }
-      return null;
-    };
-
-    const monthlyLists = allTimeLists.filter(list => {
-      const listDate = getDateFromSource(list.date) || getDateFromSource(list.createdAt);
+    const monthlyLists = allLists.filter(list => {
+      const listDate = getCorrectLocalDate(list.date) || getCorrectLocalDate(list.createdAt);
       return listDate ? listDate.getMonth() === currentMonth && listDate.getFullYear() === currentYear : false;
     });
     
-    const monthlyItems: ShoppingItem[] = monthlyLists.flatMap(list => list.items);
+    const monthlyItems: ShoppingItem[] = monthlyLists.flatMap(list => list.items || []);
     const totalMonthlyItems = monthlyItems.length;
     const purchasedMonthlyItems = monthlyItems.filter(item => item.checked).length;
     const monthlyPurchasedPercentage = totalMonthlyItems > 0 ? Math.round((purchasedMonthlyItems / totalMonthlyItems) * 100) : 0;
@@ -97,16 +153,14 @@ const Dashboard = () => {
     const calculateItemPrice = (item: ShoppingItem) => {
       const price = Number(item.price) || 0;
       const quantity = Number(item.quantity) || 1;
-      const unit = (item.unit || '').toLowerCase();
-      const allowedUnits = ['unidade', 'caixa', 'pacote', 'un', 'cx', 'pct'];
-      return allowedUnits.includes(unit) ? price * quantity : price;
+      return price * quantity;
     };
 
     let totalMonthlySpending = 0;
     const categorySpendingMap: { [key: string]: number } = {};
 
     monthlyLists.forEach(list => {
-        list.items.forEach(item => {
+        (list.items || []).forEach(item => {
             if (item.checked) {
                 const itemPrice = calculateItemPrice(item);
                 totalMonthlySpending += itemPrice;
@@ -118,7 +172,6 @@ const Dashboard = () => {
 
     const categorySpending = Object.keys(categorySpendingMap).map(name => ({ name, value: categorySpendingMap[name] })).sort((a, b) => b.value - a.value);
 
-    // --- Pantry & Alerts Calculation (Independent of Lists) ---
     const pantryItems: PantryItem[] = pantrySnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as PantryItem)) || [];
     
     const expiringItems = pantryItems.filter(item => {
@@ -149,25 +202,34 @@ const Dashboard = () => {
       alerts.push("Nenhuma notificação importante no momento.");
     }
 
-    // --- All-Time Data Calculation (for Suggestions) ---
-    const allTimeItems: ShoppingItem[] = allTimeLists.flatMap(list => list.items.map(item => ({...item, listCreatedAt: list.createdAt})));
-    const itemFrequency: { [name: string]: number } = {};
+    const allTimeItems: ShoppingItem[] = allLists.flatMap(list => list.items ? list.items.map(item => ({...item, listCreatedAt: list.createdAt})) : []);
+    const itemFrequency: { [name: string]: { count: number, item: ShoppingItem } } = {};
     allTimeItems.forEach(item => {
-      itemFrequency[item.name] = (itemFrequency[item.name] || 0) + 1;
+      if (!itemFrequency[item.name]) {
+        itemFrequency[item.name] = { count: 0, item: item };
+      }
+      itemFrequency[item.name].count++;
     });
 
-    const sortedPopularItems = Object.keys(itemFrequency).sort((a, b) => itemFrequency[b] - itemFrequency[a]);
+    const sortedPopularItems = Object.keys(itemFrequency).sort((a, b) => itemFrequency[b].count - itemFrequency[a].count);
     
-    const suggestions: ShoppingItem[] = sortedPopularItems.slice(0, 5).map(itemName => {
-        const mostRecentVersion = allTimeItems
-            .filter(item => item.name === itemName)
-            .sort((a, b) => (b.listCreatedAt?.seconds || 0) - (a.listCreatedAt?.seconds || 0))[0];
-        return mostRecentVersion;
-    });
+    const suggestions: ShoppingItem[] = sortedPopularItems.slice(0, 5).map(itemName => itemFrequency[itemName].item);
 
-    return { allTimeLists, totalMonthlyItems, purchasedMonthlyItems, monthlyPurchasedPercentage, expiringItems, alerts, suggestions, categorySpending, totalMonthlySpending, monthlyBudget };
+    return {
+      totalMonthlyItems,
+      purchasedMonthlyItems,
+      monthlyPurchasedPercentage,
+      expiringItems,
+      alerts,
+      suggestions,
+      categorySpending,
+      totalMonthlySpending,
+      monthlyBudget,
+      currentMonthName: capitalizedMonthName,
+      currentMonthShortName: capitalizedMonthName.substring(0, 3)
+    };
 
-  }, [listsSnapshot, pantrySnapshot, userData]);
+  }, [allLists, pantrySnapshot, userData]);
   
   const handleAddSuggestion = (item: ShoppingItem) => {
     setSelectedSuggestion(item);
@@ -175,10 +237,10 @@ const Dashboard = () => {
   }
 
   const summaryCards = [
-    { icon: List, title: "Itens no Mês", value: totalMonthlyItems, color: "text-green-500", bgColor: "bg-green-500/10" },
-    { icon: CheckCircle, title: "Comprados no Mês", value: `${purchasedMonthlyItems} (${monthlyPurchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-    { icon: Wallet, title: "Gasto Total (Mês)", value: `R$ ${totalMonthlySpending.toFixed(2)}`, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    { icon: AlertTriangle, title: "Próximos do Venc.", value: expiringItems, color: "text-red-500", bgColor: "bg-red-500/10", action: () => navigate('/pantry') },
+    { icon: List, title: `Itens (${currentMonthShortName})`, value: totalMonthlyItems, color: "text-green-500", bgColor: "bg-green-500/10" },
+    { icon: CheckCircle, title: `Comprados (${currentMonthShortName})`, value: `${purchasedMonthlyItems} (${monthlyPurchasedPercentage}%)`, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { icon: Wallet, title: `Gasto (${currentMonthShortName})`, value: `R$ ${totalMonthlySpending.toFixed(2)}`, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+    { icon: AlertTriangle, title: "Próx. Vencimento", value: expiringItems, color: "text-red-500", bgColor: "bg-red-500/10", action: () => navigate('/pantry') },
   ];
 
   const quickActions = [
@@ -190,13 +252,13 @@ const Dashboard = () => {
 
   const budgetSpentPercentage = monthlyBudget > 0 ? (totalMonthlySpending / monthlyBudget) * 100 : 0;
 
-  if (loadingAuth || loadingLists || loadingPantry || loadingUser) {
-    return <div className="flex items-center justify-center h-screen bg-background"><p>Carregando seu dashboard...</p></div>;
+  if (loadingAuth || isLoadingData || loadingPantry || loadingUser) {
+    return <div className="flex items-center justify-center h-screen bg-background"><LoadingSpinner size={32} /> <p className='ml-4'>Carregando seu dashboard...</p></div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
-      <AppHeader title="Meu Dashboard" subtitle={`Resumo de ${new Date().toLocaleDateString('pt-BR', { month: 'long' })}`}/>
+      <AppHeader title="Meu Dashboard" subtitle={`Resumo de ${currentMonthName}`}/>
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 animate-fade-in">
@@ -230,7 +292,7 @@ const Dashboard = () => {
         )}
 
         <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />Gastos por Categoria (Mês Atual)</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />{`Gastos por Categoria (${currentMonthName})`}</h2>
             <CategoryChart data={categorySpending} />
         </Card>
 
@@ -269,7 +331,7 @@ const Dashboard = () => {
         isOpen={isSuggestionDialogOpen}
         onOpenChange={setSuggestionDialogOpen}
         suggestedItem={selectedSuggestion}
-        lists={allTimeLists}
+        lists={allLists}
       />
 
       <BottomNavigation />

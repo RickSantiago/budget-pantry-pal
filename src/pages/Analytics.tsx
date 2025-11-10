@@ -11,7 +11,7 @@ import { SupermarketSpendingChart } from "@/components/charts/SupermarketSpendin
 import { PriceEvolutionChart } from "@/components/charts/PriceEvolutionChart";
 import { AnalyticsInfoCards } from "@/components/charts/AnalyticsInfoCards";
 import { PlannedVsSpentChart } from "@/components/charts/PlannedVsSpentChart";
-
+import { BudgetEvolutionChart } from "@/components/charts/BudgetEvolutionChart"; // Importando o novo gráfico
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#ef4444", "#14b8a6", "#6366f1"];
 
@@ -32,18 +32,16 @@ const parseCurrency = (value: string | number | undefined): number => {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
         const numberString = value
-            .replace(/R\$\s?/, '')       
-            .replace(/\./g, '')          
-            .replace(/,/, '.');          
+            .replace(/R\$\s?/, '')
+            .replace(/\./g, '')
+            .replace(/,/, '.');
         const parsed = parseFloat(numberString);
         return isNaN(parsed) ? 0 : parsed;
     }
     return 0;
 };
 
-
 const getMonthYearLabel = (date: Date) => date.toLocaleString('pt-BR', { month: 'short', year: '2-digit' }).replace('.', '');
-
 
 const Analytics = () => {
   const [user, authLoading] = useAuthState(auth);
@@ -212,6 +210,7 @@ const Analytics = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <CategorySpendingChart data={chartData.categoryData} />
                 <SupermarketSpendingChart data={chartData.supermarketData} />
+                <BudgetEvolutionChart /> 
             </div>
             <AnalyticsInfoCards 
                 topSpendingItems={chartData.topSpendingItems}
