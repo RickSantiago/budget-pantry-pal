@@ -46,10 +46,6 @@ All colors MUST be HSL.
     --ring: 187 100% 40%;
 
     --radius: 1rem;
-
-    --gradient-primary: linear-gradient(90deg, hsl(187 100% 40%), hsl(187 100% 31%));
-    --gradient-success: linear-gradient(135deg, hsl(145 63% 42%), hsl(145 63% 52%));
-    --gradient-card: linear-gradient(135deg, rgba(250, 250, 250, 0.9), rgba(250, 250, 250, 0.7));
     
     --glass-bg: rgba(250, 250, 250, 0.7);
     --glass-border: rgba(250, 250, 250, 0.18);
@@ -97,10 +93,6 @@ All colors MUST be HSL.
     --border: 167 18% 30%;
     --input: 167 18% 30%;
     --ring: 167 21% 47%;
-
-    --gradient-primary: linear-gradient(90deg, hsl(167 21% 47%), hsl(167 18% 30%));
-    --gradient-success: linear-gradient(135deg, hsl(120 41% 54%), hsl(120 41% 64%));
-    --gradient-card: linear-gradient(135deg, rgba(37, 51, 66, 0.9), rgba(37, 51, 66, 0.7));
     
     --glass-bg: rgba(37, 51, 66, 0.7);
     --glass-border: rgba(62, 89, 84, 0.3);
@@ -124,32 +116,11 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  .bg-auth-gradient {
-    background: linear-gradient(160deg, hsl(320 70% 95%), hsl(60 80% 95%), hsl(140 70% 95%));
-  }
-
-  .dark .bg-auth-gradient {
-    background: linear-gradient(160deg, hsl(320 40% 15%), hsl(240 10% 10%), hsl(180 30% 12%));
-  }
-
   .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--glass-border);
-  }
-
-  .gradient-primary {
-    background: var(--gradient-primary);
-    color: hsl(var(--primary-foreground));
-  }
-
-  .gradient-success {
-    background: var(--gradient-success);
-  }
-
-  .gradient-card {
-    background: var(--gradient-card);
   }
 
   .shadow-glow {
