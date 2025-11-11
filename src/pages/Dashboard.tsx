@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import AppHeader from "@/components/AppHeader";
 import {
   ShoppingCart,
@@ -16,13 +15,27 @@ import {
   Bell,
   PieChart as PieChartIcon,
   Target,
-  TrendingUp
+  TrendingUp,
+  Cookie,
+  Beef,
+  Carrot,
+  Martini,
+  Milk,
+  ShowerHead,
+  Sparkles,
+  Snowflake,
+  Wheat,
+  Sandwich,
+  CupSoda,
+  CookingPot,
+  Droplets,
+  SprayCan,
+  Package
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
 import { ShoppingList, PantryItem, ShoppingItem } from "@/types/shopping";
 import BottomNavigation from "@/components/BottomNavigation";
-import CategoryChart from "@/components/CategoryChart";
 import AddSuggestionToListDialog from "@/components/AddSuggestionToListDialog";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollection, useDocumentData } from "react-firebase-hooks/firestore";
@@ -31,6 +44,8 @@ import { auth, db } from "@/lib/firebase";
 import { differenceInDays, parseISO } from "date-fns";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { BudgetEvolutionChart } from "@/components/charts/BudgetEvolutionChart";
+import { Progress } from "@/components/ui/progress";
+import { getCategoryStyle } from "@/utils/categoryMetadata";
 
 
 // Criterious Date Parser: Handles timezone issues with date strings.
@@ -147,31 +162,33 @@ const Dashboard = () => {
     });
     
     const monthlyItems: ShoppingItem[] = monthlyLists.flatMap(list => list.items || []);
+
+    const { purchasedMonthlyItems, totalMonthlySpending, categorySpendingMap } = monthlyItems.reduce(
+      (acc, item) => {
+        if (item.checked) {
+          acc.purchasedMonthlyItems++;
+
+          const price = Number(item.price) || 0;
+          const quantity = Number(item.quantity) || 1;
+          const unit = String(item.unit || "").toLowerCase();
+          const multipliableUnits = ['unidade', 'caixa', 'pacote', 'un', 'cx', 'pct'];
+          
+          const itemPrice = multipliableUnits.includes(unit) ? price * quantity : price;
+
+          acc.totalMonthlySpending += itemPrice;
+          const category = item.category || 'Outros';
+          acc.categorySpendingMap[category] = (acc.categorySpendingMap[category] || 0) + itemPrice;
+        }
+        return acc;
+      },
+      { purchasedMonthlyItems: 0, totalMonthlySpending: 0, categorySpendingMap: {} as { [key: string]: number } }
+    );
+
     const totalMonthlyItems = monthlyItems.length;
-    const purchasedMonthlyItems = monthlyItems.filter(item => item.checked).length;
     const monthlyPurchasedPercentage = totalMonthlyItems > 0 ? Math.round((purchasedMonthlyItems / totalMonthlyItems) * 100) : 0;
-    
-    const calculateItemPrice = (item: ShoppingItem) => {
-      const price = Number(item.price) || 0;
-      const quantity = Number(item.quantity) || 1;
-      return price * quantity;
-    };
-
-    let totalMonthlySpending = 0;
-    const categorySpendingMap: { [key: string]: number } = {};
-
-    monthlyLists.forEach(list => {
-        (list.items || []).forEach(item => {
-            if (item.checked) {
-                const itemPrice = calculateItemPrice(item);
-                totalMonthlySpending += itemPrice;
-                const category = item.category || "Outros";
-                categorySpendingMap[category] = (categorySpendingMap[category] || 0) + itemPrice;
-            }
-        });
-    });
-
-    const categorySpending = Object.keys(categorySpendingMap).map(name => ({ name, value: categorySpendingMap[name] })).sort((a, b) => b.value - a.value);
+    const categorySpending = Object.entries(categorySpendingMap)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
 
     const pantryItems: PantryItem[] = pantrySnapshot?.docs.map(doc => ({ id: doc.id, ...doc.data() } as PantryItem)) || [];
     
@@ -298,8 +315,36 @@ const Dashboard = () => {
         </Card>
 
         <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />{`Gastos por Categoria (${currentMonthName})`}</h2>
-            <CategoryChart data={categorySpending} />
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                <PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                {`Gastos por Categoria (${currentMonthName})`}
+            </h2>
+            <div className="space-y-4">
+                {categorySpending.length > 0 ? (
+                    categorySpending.map((category) => {
+                        const style = getCategoryStyle(category.name);
+                        const Icon = style.icon;
+                        const percentage = totalMonthlySpending > 0 ? (category.value / totalMonthlySpending) * 100 : 0;
+
+                        return (
+                            <div key={category.name} className="flex items-center gap-3 sm:gap-4">
+                                <Icon className={`w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 ${style.color}`} />
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium">{category.name}</span>
+                                        <span className="text-sm font-bold">R$ {category.value.toFixed(2)}</span>
+                                    </div>
+                                    <div className="w-full bg-muted rounded-full h-2.5">
+                                        <div className={`${style.bgColor} h-2.5 rounded-full`} style={{ width: `${percentage}%` }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">Não há gastos registrados para este mês.</p>
+                )}
+            </div>
         </Card>
 
         <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
@@ -321,7 +366,7 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
-            ) : <p className="text-xs sm:text-sm text-muted-foreground">Suas sugestões aparecerão aqui conforme você usa o app.</p>}
+            ) : <p className="text-sm text-muted-foreground">Suas sugestões aparecerão aqui conforme você usa o app.</p>}
           </Card>
         </div>
 
@@ -345,4 +390,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;;
