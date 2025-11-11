@@ -15,22 +15,7 @@ import {
   Bell,
   PieChart as PieChartIcon,
   Target,
-  TrendingUp,
-  Cookie,
-  Beef,
-  Carrot,
-  Martini,
-  Milk,
-  ShowerHead,
-  Sparkles,
-  Snowflake,
-  Wheat,
-  Sandwich,
-  CupSoda,
-  CookingPot,
-  Droplets,
-  SprayCan,
-  Package
+  TrendingUp
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
@@ -46,7 +31,6 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { BudgetEvolutionChart } from "@/components/charts/BudgetEvolutionChart";
 import { Progress } from "@/components/ui/progress";
 import { getCategoryStyle } from "@/utils/categoryMetadata";
-
 
 // Criterious Date Parser: Handles timezone issues with date strings.
 const getCorrectLocalDate = (dateSource: any): Date | null => {
@@ -73,7 +57,6 @@ const getCorrectLocalDate = (dateSource: any): Date | null => {
 
     return null;
 };
-
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -335,7 +318,7 @@ const Dashboard = () => {
                                         <span className="text-sm font-bold">R$ {category.value.toFixed(2)}</span>
                                     </div>
                                     <div className="w-full bg-muted rounded-full h-2.5">
-                                        <div className={`${style.bgColor} h-2.5 rounded-full`} style={{ width: `${percentage}%` }}></div>
+                                        <div className="h-2.5 rounded-full" style={{ width: `${percentage}%`, backgroundColor: style.bgColor }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -390,4 +373,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;;
+export default Dashboard;
