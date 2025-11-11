@@ -156,12 +156,21 @@ const Lists = () => {
 
   const handleCreateList = async (listData: { title: string; observation: string; date: string; plannedBudget?: number }) => {
     if (!user) return;
-    const payload = {
-      ...listData,
+    const payload: any = {
+      title: listData.title,
+      observation: listData.observation,
+      date: listData.date,
       ownerId: user.uid,
       sharedWith: [],
       createdAt: new Date().toISOString(),
+      deletedAt: null,
     };
+    
+    // Só adiciona plannedBudget se tiver valor
+    if (listData.plannedBudget !== undefined && listData.plannedBudget !== null) {
+      payload.plannedBudget = listData.plannedBudget;
+    }
+    
     const newListRef = await addDoc(collection(db, 'lists'), payload);
     setCurrentListId(newListRef.id);
   };
@@ -169,7 +178,19 @@ const Lists = () => {
   const handleEditList = async (updatedData: { title: string; observation: string; date: string; plannedBudget?: number }) => {
     if (!currentListId) return;
     const listRef = doc(db, 'lists', currentListId);
-    await updateDoc(listRef, updatedData);
+    
+    // Remove campos undefined antes de enviar ao Firebase
+    const cleanData: any = {
+      title: updatedData.title,
+      observation: updatedData.observation,
+      date: updatedData.date,
+    };
+    
+    if (updatedData.plannedBudget !== undefined && updatedData.plannedBudget !== null) {
+      cleanData.plannedBudget = updatedData.plannedBudget;
+    }
+    
+    await updateDoc(listRef, cleanData);
     setIsEditListDialogOpen(false);
   };
 
