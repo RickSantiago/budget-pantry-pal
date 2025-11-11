@@ -193,14 +193,14 @@ const Profile = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
+      <div className="min-h-screen pb-24">
         <AppHeader
           title="Meu Perfil"
           subtitle="Gerencie suas informações e preferências"
         />
 
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-          <Card className="glass border-border/50 p-6 shadow-md">
+          <Card className="glass p-6 shadow-md">
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="relative">
                 <Avatar className="w-24 h-24 border-4 border-primary/20">
@@ -220,7 +220,7 @@ const Profile = () => {
 
           <GamificationCard user={user} lists={allLists} pantryItems={pantryItems} budgetHistory={budgetHistory} />
 
-          <Card className="glass border-border/50 p-6 shadow-md">
+          <Card className="glass p-6 shadow-md">
             <h2 className="text-lg font-semibold mb-4 flex items-center"><Settings className="w-5 h-5 mr-2" />Configurações Gerais</h2>
             <div className="space-y-4">
               <div>
@@ -248,14 +248,14 @@ const Profile = () => {
 
           <DataManagementCard onExport={handleExportData} onDelete={() => setDeleteConfirmOpen(true)} />
 
-          <Card className="glass border-border/50 p-6 shadow-md">
+          <Card className="glass p-6 shadow-md">
             <Button onClick={() => navigate('/trash')} variant="outline" className="w-full">
               <Trash2 className="w-4 h-4 mr-2" />
               Lixeira
             </Button>
           </Card>
 
-          <Card className="glass border-border/50 p-4 shadow-md">
+          <Card className="glass p-4 shadow-md">
             <Button onClick={() => signOut(auth)} variant="ghost" className="w-full text-muted-foreground"><LogOut className="w-4 h-4 mr-2" />Sair da Conta</Button>
           </Card>
 

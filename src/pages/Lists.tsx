@@ -316,7 +316,7 @@ const Lists = () => {
   if (!currentListId || !currentList) {
      if (loading) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24 flex flex-col">
+        <div className="min-h-screen pb-24 flex flex-col">
           <AppHeader
             title="Market Match"
             subtitle="Seu app de organização de compras"
@@ -345,7 +345,7 @@ const Lists = () => {
     }
 
     return (
-      <div className='min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24'>
+      <div className='min-h-screen pb-24'>
         <AppHeader
           title='Market Match'
           subtitle='Seu app de organização de compras'
@@ -404,8 +404,8 @@ const Lists = () => {
   const isOverBudget = plannedBudget > 0 && totalPrice > plannedBudget;
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24'>
-      <div className='glass sticky top-0 z-10 border-b border-border/50 backdrop-blur-lg'>
+    <div className='min-h-screen pb-24'>
+      <div className='glass sticky top-0 z-10 backdrop-blur-lg'>
         <div className='max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-5'>
           <div className='flex items-start justify-between gap-3 mb-4'>
             <div className='flex items-center gap-2 sm:gap-3 flex-1 min-w-0'>
@@ -483,7 +483,7 @@ const Lists = () => {
           </div>
 
           {isOverBudget && showBudgetAlert && (
-            <Alert className='glass border-destructive/50 bg-destructive/10 animate-fade-in'>
+            <Alert className='glass bg-destructive/10 animate-fade-in'>
               <AlertTriangle className='h-4 w-4 text-destructive' />
               <AlertDescription className='flex items-center justify-between'>
                 <span className='text-sm'>
@@ -502,7 +502,7 @@ const Lists = () => {
           )}
 
           <div className='grid grid-cols-2 gap-3'>
-            <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md'>
+            <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-md'>
               <p className='text-xs sm:text-sm text-muted-foreground mb-1'>Gasto Atual</p>
               <p className={`text-xl sm:text-3xl font-bold ${isOverBudget ? 'text-destructive' : 'text-success'}`}>
                 R$ {totalPrice.toFixed(2)}
@@ -513,7 +513,7 @@ const Lists = () => {
             </div>
 
             {plannedBudget > 0 && (
-              <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-border/50 shadow-md'>
+              <div className='glass rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-md'>
                 <p className='text-xs sm:text-sm text-muted-foreground mb-1'>Planejado</p>
                 <p className='text-xl sm:text-3xl font-bold text-foreground'>
                   R$ {plannedBudget.toFixed(2)}
@@ -541,7 +541,7 @@ const Lists = () => {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
-              className='glass border-border/50 rounded-lg px-2 py-1 text-sm text-foreground bg-background'
+              className='glass rounded-lg px-2 py-1 text-sm text-foreground'
             >
               <option value='Todos'>Todos</option>
               {[...new Set(items.map(i => i.category).filter(Boolean))].map(cat => (

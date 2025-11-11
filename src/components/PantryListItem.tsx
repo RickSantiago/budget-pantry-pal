@@ -27,7 +27,7 @@ const PantryListItem = ({ item, onConsume, onEdit, onDelete }: PantryListItemPro
   };
 
   return (
-    <Card className="p-4 flex justify-between items-center">
+    <Card className="glass p-4 flex justify-between items-center">
       <div>
         <p className="font-semibold">{item.name}</p>
         <p className={`text-sm ${getExpiryColor()}`}>{expiryText()}</p>

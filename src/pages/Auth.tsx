@@ -10,6 +10,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import Particles from "@/components/ui/Particles";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -115,11 +116,12 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+        <Particles />
+      <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
-      <main className="w-full max-w-sm mx-auto animate-fade-in">
+      <main className="w-full max-w-sm mx-auto animate-fade-in z-10">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground tracking-tight">{isLogin ? "Bem-vindo!" : "Crie sua conta"}</h1>
           <p className="text-muted-foreground mt-2 text-sm">{isLogin ? "Faça login para continuar" : "Desbloqueie todos os recursos"}</p>

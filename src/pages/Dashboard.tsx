@@ -254,11 +254,11 @@ const Dashboard = () => {
   const budgetSpentPercentage = monthlyBudget > 0 ? (totalMonthlySpending / monthlyBudget) * 100 : 0;
 
   if (loadingAuth || isLoadingData || loadingPantry || loadingUser) {
-    return <div className="flex items-center justify-center h-screen bg-background"><LoadingSpinner size={32} /> <p className='ml-4'>Carregando seu dashboard...</p></div>;
+    return <div className="flex items-center justify-center h-screen"><LoadingSpinner size={32} /> <p className='ml-4'>Carregando seu dashboard...</p></div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24">
+    <div className="min-h-screen pb-24">
       <AppHeader title="Meu Dashboard" subtitle={`Resumo de ${currentMonthName}`}/>
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -267,7 +267,7 @@ const Dashboard = () => {
             <Card
               key={index}
               onClick={card.action}
-              className={`glass border-border/50 p-3 sm:p-4 transition-all duration-300 animate-slide-up rounded-xl sm:rounded-2xl ${card.action ? 'cursor-pointer hover:shadow-lg' : ''}`}>
+              className={`glass p-3 sm:p-4 transition-all duration-300 animate-slide-up rounded-xl sm:rounded-2xl ${card.action ? 'cursor-pointer hover:shadow-lg' : ''}`}>
               <div className="flex flex-col items-center text-center space-y-1.5 sm:space-y-2">
                 <div className={`${card.bgColor} p-2 sm:p-3 rounded-full`}><card.icon className={`w-4 h-4 sm:w-6 sm:h-6 ${card.color}`} /></div>
                 <div>
@@ -280,7 +280,7 @@ const Dashboard = () => {
         </div>
 
         {monthlyBudget > 0 && (
-            <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
+            <Card className="glass p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
                 <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><Target className="w-4 h-4 sm:w-5 sm:h-5" />Controle de Orçamento Mensal</h2>
                 <div>
                     <div className="flex justify-between text-xs sm:text-sm mb-2">
@@ -292,12 +292,12 @@ const Dashboard = () => {
             </Card>
         )}
 
-        <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
+        <Card className="glass p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />Evolução do Orçamento Mensal</h2>
             <BudgetEvolutionChart />
         </Card>
 
-        <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
+        <Card className="glass p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
                 <PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 {`Gastos por Categoria (${currentMonthName})`}
@@ -331,19 +331,19 @@ const Dashboard = () => {
         </Card>
 
         <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
-          <Card className="glass border-border/50 p-4 sm:p-6 animate-slide-up rounded-xl sm:rounded-2xl">
+          <Card className="glass p-4 sm:p-6 animate-slide-up rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><Bell className="w-4 h-4 sm:w-5 sm:h-5" />Notificações</h2>
             <div className="space-y-2 sm:space-y-3">
-              {alerts.map((alert, index) => (<div key={index} className="glass border border-border/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-xs sm:text-sm hover:shadow-md transition-all">{alert}</div>))}
+              {alerts.map((alert, index) => (<div key={index} className="glass p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-xs sm:text-sm hover:shadow-md transition-all">{alert}</div>))}
             </div>
           </Card>
 
-          <Card className="glass border-border/50 p-4 sm:p-6 animate-slide-up rounded-xl sm:rounded-2xl">
+          <Card className="glass p-4 sm:p-6 animate-slide-up rounded-xl sm:rounded-2xl">
             <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2"><PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />Sugestões de compras</h2>
             {suggestions.length > 0 ? (
               <div className="space-y-2">
                 {suggestions.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between glass border border-border/50 p-2 rounded-lg">
+                  <div key={index} className="flex items-center justify-between glass p-2 rounded-lg">
                     <span className="text-sm font-medium">{item.name}</span>
                     <Button size="sm" onClick={() => handleAddSuggestion(item)}><Plus className="w-4 h-4 mr-1"/>Add</Button>
                   </div>
@@ -353,7 +353,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <Card className="glass border-border/50 p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
+        <Card className="glass p-4 sm:p-6 animate-scale-in rounded-xl sm:rounded-2xl">
           <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Ações Rápidas</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             {quickActions.map((action, index) => (<Button key={index} variant="outline" className="glass h-20 sm:h-24 flex-col gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl hover:shadow-lg transition-all" onClick={action.action}><action.icon className="w-5 h-5 sm:w-6 sm:h-6" /><span className="text-xs sm:text-sm">{action.text}</span></Button>))}

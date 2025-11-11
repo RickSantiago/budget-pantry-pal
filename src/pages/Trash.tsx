@@ -180,7 +180,7 @@ const Trash = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen pb-24">
       <AppHeader title="Lixeira" />
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
@@ -215,7 +215,7 @@ const Trash = () => {
 
           <TabsContent value="lists" className="space-y-4 mt-6">
             {deletedLists.length === 0 ? (
-              <Card className="glass border-border/50">
+              <Card className="glass">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Trash2 className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Nenhuma lista na lixeira</p>
@@ -223,7 +223,7 @@ const Trash = () => {
               </Card>
             ) : (
               deletedLists.map((list) => (
-                <Card key={list.id} className="glass border-border/50">
+                <Card key={list.id} className="glass">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <div>
@@ -267,7 +267,7 @@ const Trash = () => {
 
           <TabsContent value="items" className="space-y-4 mt-6">
             {deletedItems.length === 0 ? (
-              <Card className="glass border-border/50">
+              <Card className="glass">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Trash2 className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Nenhum item na lixeira</p>
@@ -275,7 +275,7 @@ const Trash = () => {
               </Card>
             ) : (
               deletedItems.map((item) => (
-                <Card key={`${item.listId}-${item.id}`} className="glass border-border/50">
+                <Card key={`${item.listId}-${item.id}`} className="glass">
                   <CardContent className="flex items-center justify-between py-4">
                     <div>
                       <h4 className="font-semibold">{item.name}</h4>

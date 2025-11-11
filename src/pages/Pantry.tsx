@@ -62,7 +62,7 @@ const Pantry = () => {
   const sortedItems = typedPantryItems?.sort((a, b) => parseISO(a.expiryDate).getTime() - parseISO(b.expiryDate).getTime());
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 pb-24 flex flex-col">
+    <div className="min-h-screen pb-24 flex flex-col">
       <AppHeader
         title="Minha Despensa"
         subtitle="Gerencie os itens que você tem em casa"

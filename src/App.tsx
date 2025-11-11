@@ -16,7 +16,8 @@ import SharedListView from "@/pages/SharedListView";
 import Profile from "@/pages/Profile";
 import Pantry from "@/pages/Pantry";
 import Trash from "@/pages/Trash";
-import ReloadPrompt from "@/components/ReloadPrompt"; // Importa o componente
+import ReloadPrompt from "@/components/ReloadPrompt";
+import Layout from "@/components/Layout"; // Import the new Layout
 
 // Layout para rotas autenticadas
 const ProtectedLayout = () => {
@@ -50,25 +51,27 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <Sonner />
-        <ReloadPrompt /> {/* Adiciona o componente aqui */}
+        <ReloadPrompt />
         <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Index />} />
-          
-          {/* Public Shared List Route */}
-          <Route path="/shared/:listId" element={<SharedListView />} />
+          <Route element={<Layout />}>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Index />} />
+            
+            {/* Public Shared List Route */}
+            <Route path="/shared/:listId" element={<SharedListView />} />
 
-          {/* Rotas Protegidas */}
-          <Route element={<ProtectedLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/lists" element={<Lists />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/pantry" element={<Pantry />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/trash" element={<Trash />} />
+            {/* Rotas Protegidas */}
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/lists" element={<Lists />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/pantry" element={<Pantry />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/trash" element={<Trash />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
           </Route>
-          
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </ThemeProvider>
     </QueryClientProvider>
