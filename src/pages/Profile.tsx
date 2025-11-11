@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { LogOut, Settings, Save, Wallet, User as UserIcon, Camera } from "lucide-react";
+import { LogOut, Settings, Save, Wallet, User as UserIcon, Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -247,6 +247,13 @@ const Profile = () => {
           <NotificationSettingsCard settings={notificationSettings} onSettingsChange={handleNotificationSettingsChange} />
 
           <DataManagementCard onExport={handleExportData} onDelete={() => setDeleteConfirmOpen(true)} />
+
+          <Card className="glass border-border/50 p-6 shadow-md">
+            <Button onClick={() => navigate('/trash')} variant="outline" className="w-full">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Lixeira
+            </Button>
+          </Card>
 
           <Card className="glass border-border/50 p-4 shadow-md">
             <Button onClick={() => signOut(auth)} variant="ghost" className="w-full text-muted-foreground"><LogOut className="w-4 h-4 mr-2" />Sair da Conta</Button>

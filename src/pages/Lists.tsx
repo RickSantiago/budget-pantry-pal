@@ -99,10 +99,12 @@ const Lists = () => {
       for (const docSnapshot of querySnapshot.docs) {
         const list = { ...docSnapshot.data(), id: docSnapshot.id } as ShoppingList;
 
-        if (list.ownerId === user.uid || (Array.isArray(list.sharedWith) && list.sharedWith.includes(user.email || ''))) {
+        if (!list.deletedAt && (list.ownerId === user.uid || (Array.isArray(list.sharedWith) && list.sharedWith.includes(user.email || '')))) {
           const itemsCollection = collection(db, 'lists', list.id, 'items');
           const itemsSnapshot = await getDocs(itemsCollection);
-          const listItems = itemsSnapshot.docs.map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id }) as ShoppingItem);
+          const listItems = itemsSnapshot.docs
+            .map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id }) as ShoppingItem)
+            .filter(item => !item.deletedAt);
           
           list.items = listItems;
           list.totalSpent = listItems.reduce((sum, item) => {
@@ -138,8 +140,11 @@ const Lists = () => {
     const itemsCollection = collection(db, 'lists', currentListId, 'items');
     const unsubscribe = onSnapshot(itemsCollection, querySnapshot => {
       const itemsData: ShoppingItem[] = [];
-      querySnapshot.forEach(doc => {
-        itemsData.push({ ...doc.data(), id: doc.id } as ShoppingItem);
+      querySnapshot.forEach(docSnap => {
+        const item = { ...docSnap.data(), id: docSnap.id } as ShoppingItem;
+        if (!item.deletedAt) {
+          itemsData.push(item);
+        }
       });
       setItems(itemsData);
     });
@@ -169,14 +174,16 @@ const Lists = () => {
   };
 
   const handleDeleteList = async (listId: string) => {
+    const deletedAt = new Date().toISOString();
     const itemsCollection = collection(db, 'lists', listId, 'items');
     const itemsSnapshot = await getDocs(itemsCollection);
     const batch = writeBatch(db);
-    itemsSnapshot.forEach(doc => {
-      batch.delete(doc.ref);
+    itemsSnapshot.forEach(itemDoc => {
+      batch.update(itemDoc.ref, { deletedAt });
     });
+    const listRef = doc(db, 'lists', listId);
+    batch.update(listRef, { deletedAt });
     await batch.commit();
-    await deleteDoc(doc(db, 'lists', listId));
   };
 
   const handleToggleItem = async (id: string) => {
@@ -231,8 +238,9 @@ const Lists = () => {
   const handleDeleteItem = async () => {
     if (!currentListId || !itemToDelete) return;
     try {
-      await deleteDoc(doc(db, "lists", currentListId, "items", itemToDelete.id));
-      toast.success(`Item "${itemToDelete.name}" removido com sucesso.`);
+      const itemRef = doc(db, "lists", currentListId, "items", itemToDelete.id);
+      await updateDoc(itemRef, { deletedAt: new Date().toISOString() });
+      toast.success(`Item "${itemToDelete.name}" movido para lixeira.`);
       setIsDeleteDialogOpen(false);
       setItemToDelete(null);
     } catch (error) {

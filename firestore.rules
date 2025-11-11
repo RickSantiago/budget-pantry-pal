@@ -19,10 +19,11 @@ service cloud.firestore {
              (!('supermarket' in item) || item.supermarket is string) &&
              (!('expiryDate' in item) || item.expiryDate is string) &&
              (!('isRecurring' in item) || item.isRecurring is bool) &&
+             (!('deletedAt' in item) || item.deletedAt is string) &&
              // Ensure no other fields are present
              item.keys().hasOnly([
                'name', 'quantity', 'unit', 'checked', 
-               'price', 'category', 'supermarket', 'expiryDate', 'isRecurring', 'isOptional'
+               'price', 'category', 'supermarket', 'expiryDate', 'isRecurring', 'isOptional', 'deletedAt'
              ]);
     }
     

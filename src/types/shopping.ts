@@ -10,6 +10,7 @@ export interface ShoppingItem {
   expiryDate?: string;
   isRecurring?: boolean;
   isOptional?: boolean;
+  deletedAt?: string | null;
 }
 
 export interface ShoppingList {
@@ -31,6 +32,7 @@ export interface ShoppingList {
   // optional convenience: some components may render a list of items embedded
   items?: ShoppingItem[];
   createdAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface PantryItem {

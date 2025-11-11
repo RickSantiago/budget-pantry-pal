@@ -43,7 +43,9 @@ const Home = () => {
         
         const itemsCollection = collection(db, 'lists', docSnapshot.id, 'items');
         const itemsSnapshot = await getDocs(itemsCollection);
-        listData.items = itemsSnapshot.docs.map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id } as ShoppingItem));
+        listData.items = itemsSnapshot.docs
+          .map(itemDoc => ({ ...itemDoc.data(), id: itemDoc.id } as ShoppingItem))
+          .filter(item => !item.deletedAt);
 
         const totalSpent = listData.items.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
         
@@ -58,8 +60,8 @@ const Home = () => {
       });
     };
 
-    const qOwner = query(collection(db, "lists"), where("ownerId", "==", user.uid));
-    const qShared = query(collection(db, "lists"), where("sharedWith", "array-contains", user.email));
+    const qOwner = query(collection(db, "lists"), where("ownerId", "==", user.uid), where("deletedAt", "==", null));
+    const qShared = query(collection(db, "lists"), where("sharedWith", "array-contains", user.email), where("deletedAt", "==", null));
 
     const unsubOwner = onSnapshot(qOwner, (snapshot) => fetchAndProcessLists(snapshot, 'owner'));
     const unsubShared = onSnapshot(qShared, (snapshot) => fetchAndProcessLists(snapshot, 'shared'));
@@ -98,12 +100,13 @@ const Home = () => {
   const handleDeleteList = async () => {
     if (!listToDelete) return;
     try {
+      const deletedAt = new Date().toISOString();
       const batch = writeBatch(db);
       const itemsRef = collection(db, "lists", listToDelete, "items");
       const itemsSnapshot = await getDocs(itemsRef);
-      itemsSnapshot.forEach(doc => batch.delete(doc.ref));
+      itemsSnapshot.forEach(itemDoc => batch.update(itemDoc.ref, { deletedAt }));
       const listRef = doc(db, "lists", listToDelete);
-      batch.delete(listRef);
+      batch.update(listRef, { deletedAt });
       await batch.commit();
       setLists(prev => prev.filter(l => l.id !== listToDelete));
       closeDeleteDialog();

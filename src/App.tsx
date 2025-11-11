@@ -15,6 +15,7 @@ import NotFound from "@/pages/NotFound";
 import SharedListView from "@/pages/SharedListView";
 import Profile from "@/pages/Profile";
 import Pantry from "@/pages/Pantry";
+import Trash from "@/pages/Trash";
 import ReloadPrompt from "@/components/ReloadPrompt"; // Importa o componente
 
 // Layout para rotas autenticadas
@@ -64,6 +65,7 @@ const App = () => {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/pantry" element={<Pantry />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/trash" element={<Trash />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />
