@@ -1,6 +1,7 @@
 import { ShoppingList } from "@/types/shopping";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Users, ShoppingBag, Trash2, Share2, Pin, PinOff } from 'lucide-react';
 
@@ -45,7 +46,7 @@ const ShoppingListCard = ({ list, onDelete, onShare, onTogglePin }: ShoppingList
           {new Date(list.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow">
+      <CardContent className="flex-grow space-y-3">
         <div className="flex justify-between text-sm text-muted-foreground">
             <div className="flex items-center">
                 <ShoppingBag className="h-4 w-4 mr-2" />
@@ -55,6 +56,15 @@ const ShoppingListCard = ({ list, onDelete, onShare, onTogglePin }: ShoppingList
                 <span>R$ {list.totalSpent?.toFixed(2) || '0.00'}</span>
             </div>
         </div>
+        {list.plannedBudget && list.plannedBudget > 0 && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Orçamento</span>
+              <span>R$ {list.plannedBudget.toFixed(2)}</span>
+            </div>
+            <Progress value={(list.totalSpent || 0) / list.plannedBudget * 100} />
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-between items-center pt-4">
         <div className="flex items-center text-sm">
