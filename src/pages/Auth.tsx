@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Loader2, User, Eye, EyeOff, Mail, Lock, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { auth, googleProvider } from "@/lib/firebase";
@@ -208,16 +209,20 @@ const Auth = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-              <Button
-                type="button"
-                onClick={handleGoogleSignIn}
-                variant="outline"
-                className="w-full bg-background/80 border-border/50 hover:bg-background/100 hover:text-foreground h-11 rounded-lg flex items-center justify-center gap-2"
-                disabled={isAuthenticating}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.35 11.1h-9.18v2.96h5.26c-.23 1.34-1.21 2.48-2.58 3.18v2.64h4.18c2.45-2.24 3.87-5.6 3.87-9.44 0-.64-.06-1.26-.15-1.86z" fill="#4285F4"/><path d="M12.17 22c2.75 0 5.06-.9 6.75-2.45l-4.18-2.64c-1.16.78-2.65 1.24-4.06 1.24-3.12 0-5.77-2.1-6.71-4.95H1.22v3.11C2.93 19.92 7.24 22 12.17 22z" fill="#34A853"/><path d="M5.46 13.16A7.01 7.01 0 0112.17 7c1.05 0 2.05.25 2.95.71l2.2-2.2C16.92 4.17 14.66 3.5 12.17 3.5 7.24 3.5 2.93 5.58 1.22 8.89l4.24 3.27z" fill="#FBBC05"/><path d="M12.17 4.5c1.83 0 3.47.62 4.76 1.84l2.2-2.2C17.23 1.98 14.92 1 12.17 1 7.24 1 2.93 3.08 1.22 6.39l4.24 3.27C6.4 8.21 8.05 4.5 12.17 4.5z" fill="#EA4335"/></svg>
-                Google
-              </Button>
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full bg-background/80 border-border/50 h-11 rounded-lg flex items-center justify-center gap-2 opacity-60 cursor-not-allowed"
+                  disabled
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.35 11.1h-9.18v2.96h5.26c-.23 1.34-1.21 2.48-2.58 3.18v2.64h4.18c2.45-2.24 3.87-5.6 3.87-9.44 0-.64-.06-1.26-.15-1.86z" fill="#4285F4"/><path d="M12.17 22c2.75 0 5.06-.9 6.75-2.45l-4.18-2.64c-1.16.78-2.65 1.24-4.06 1.24-3.12 0-5.77-2.1-6.71-4.95H1.22v3.11C2.93 19.92 7.24 22 12.17 22z" fill="#34A853"/><path d="M5.46 13.16A7.01 7.01 0 0112.17 7c1.05 0 2.05.25 2.95.71l2.2-2.2C16.92 4.17 14.66 3.5 12.17 3.5 7.24 3.5 2.93 5.58 1.22 8.89l4.24 3.27z" fill="#FBBC05"/><path d="M12.17 4.5c1.83 0 3.47.62 4.76 1.84l2.2-2.2C17.23 1.98 14.92 1 12.17 1 7.24 1 2.93 3.08 1.22 6.39l4.24 3.27C6.4 8.21 8.05 4.5 12.17 4.5z" fill="#EA4335"/></svg>
+                  Google
+                </Button>
+                <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1.5 py-0.5 h-5">
+                  Vem aí...
+                </Badge>
+              </div>
 
               <Button
                 type="button"
