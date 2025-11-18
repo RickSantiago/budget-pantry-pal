@@ -183,3 +183,47 @@ All colors MUST be HSL.
     opacity: 0.85;
   }
 }
+
+@keyframes animated-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-border {
+  position: relative;
+  overflow: hidden;
+  --border-width: 1.8px;
+}
+
+.animated-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  border: var(--border-width) solid transparent;
+  background: linear-gradient(
+      90deg,
+      hsl(var(--primary) / 0.8),
+      hsl(var(--secondary) / 0.8),
+      hsl(var(--accent) / 0.8),
+      hsl(var(--primary) / 0.8)
+    )
+    border-box;
+  background-size: 200% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: animated-gradient 3s ease infinite;
+  z-index: -1;
+}

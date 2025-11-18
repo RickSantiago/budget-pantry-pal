@@ -40,7 +40,7 @@ const BottomNavigation = () => {
 
   return (
     <div className="fixed bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 z-20">
-      <Card className="glass border-border/50 shadow-glow rounded-2xl sm:rounded-[60px] overflow-hidden max-w-[420px] w-auto">
+      <Card className="glass animated-border rounded-2xl sm:rounded-[60px] overflow-hidden max-w-[420px] w-auto">
         <div className="flex items-center justify-center gap-0.5 sm:gap-1 p-3">
           {navigationItems.map((item, index) => {
             const isActive =
