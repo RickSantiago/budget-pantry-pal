@@ -138,9 +138,27 @@ const Analytics = () => {
 
     // Price Evolution Data
     const allItemsWithDate = filteredLists.flatMap(list => list.items.map(item => ({ ...item, listDate: list.date }))).filter(item => item.price > 0);
-    const uniqueProductNames = Array.from(new Set(allItemsWithDate.map(item => item.name.toLowerCase())));
-    const availableProducts = uniqueProductNames.map((name, index) => ({ key: name, label: name.charAt(0).toUpperCase() + name.slice(1), color: COLORS[index % COLORS.length] }));
     
+    const productsByCategory: Record<string, { key: string; label: string; color: string; }[]> = {};
+    let colorIndex = 0;
+    allItemsWithDate.forEach(item => {
+        const category = item.category || 'Outros';
+        if (!productsByCategory[category]) {
+            productsByCategory[category] = [];
+        }
+        const productKey = item.name.toLowerCase();
+        if (!productsByCategory[category].some(p => p.key === productKey)) {
+            productsByCategory[category].push({
+                key: productKey,
+                label: item.name.charAt(0).toUpperCase() + item.name.slice(1),
+                color: COLORS[colorIndex % COLORS.length]
+            });
+            colorIndex++;
+        }
+    });
+
+    const availableCategoriesForPriceChart = Object.keys(productsByCategory).sort();
+
     const timeGroupMap: Record<string, Record<string, { price: number; date: Date }>> = {};
     allItemsWithDate.forEach(item => {
         const date = parseLocal(item.listDate);
@@ -173,7 +191,8 @@ const Analytics = () => {
       topRecurringItems,
       expiringItems,
       priceEvolutionData,
-      availableProducts
+      productsByCategory,
+      availableCategoriesForPriceChart
     };
   }, [lists, period]);
 
@@ -217,7 +236,8 @@ const Analytics = () => {
             />
             <PriceEvolutionChart 
                 priceEvolutionData={chartData.priceEvolutionData}
-                availableProducts={chartData.availableProducts}
+                productsByCategory={chartData.productsByCategory}
+                availableCategoriesForPriceChart={chartData.availableCategoriesForPriceChart}
             />
           </div>
         )}
@@ -227,4 +247,4 @@ const Analytics = () => {
   );
 };
 
-export default Analytics;
+export default Analytics; 

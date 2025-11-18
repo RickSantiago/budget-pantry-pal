@@ -30,8 +30,13 @@ const CustomTooltip = ({ active, payload }: { active?: boolean, payload?: any[] 
   return null;
 };
 
-
 export const CategorySpendingChart = ({ data }: CategorySpendingChartProps) => {
+    const renderColorfulLegendText = (value: string, entry: any) => {
+      const { color } = entry;
+      const percent = (entry.payload.percent * 100).toFixed(1);
+      return <span style={{ color, fontSize: '12px' }}>{value} ({percent}%)</span>;
+    };
+
     return (
         <Card className="glass-card">
             <CardHeader>
@@ -41,21 +46,26 @@ export const CategorySpendingChart = ({ data }: CategorySpendingChartProps) => {
                 {data.length > 0 ? (
                   <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
-                        <Pie 
-                            data={data} 
-                            cx="50%" 
-                            cy="50%" 
-                            labelLine={false} 
-                            outerRadius={120} 
-                            fill="#8884d8" 
-                            dataKey="value" 
+                        <Pie
+                            data={data}
+                            cx="40%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
                             nameKey="name"
-                            label={(props) => `${(props.percent * 100).toFixed(0)}%`}
                         >
                             {data.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="focus:outline-none" />)}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
-                        <Legend iconSize={10} />
+                        <Legend
+                          iconSize={10}
+                          layout="vertical"
+                          verticalAlign="middle"
+                          align="right"
+                          formatter={renderColorfulLegendText}
+                        />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
