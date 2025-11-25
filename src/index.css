@@ -1,3 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lora&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,22 +11,22 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 207 14% 97%;
-    --foreground: 180 3% 22%;
+    --background: 0 0% 96%;
+    --foreground: 0 0% 9%;
 
     --card: 0 0% 98%;
-    --card-foreground: 180 3% 22%;
+    --card-foreground: 0 0% 9%;
 
-    --popover: 0 0% 98%;
-    --popover-foreground: 180 3% 22%;
+    --popover: 0 0% 89%;
+    --popover-foreground: 0 0% 9%;
 
-    --primary: 187 100% 40%;
-    --primary-foreground: 180 3% 22%;
+    --primary: 201 90% 27.451%;
+    --primary-foreground: 225 100% 96%;
     --primary-hover: 187 100% 50%;
     --primary-glow: 187 100% 50%;
 
-    --secondary: 187 100% 31%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 32%;
+    --secondary-foreground: 0 0% 98%;
     --secondary-hover: 187 100% 36%;
 
     --success: 145 63% 42%;
@@ -32,47 +35,70 @@ All colors MUST be HSL.
     --warning: 37 92% 51%;
     --warning-foreground: 0 0% 100%;
 
-    --muted: 0 0% 98%;
-    --muted-foreground: 180 5% 58%;
+    --muted: 0 0% 63%;
+    --muted-foreground: 0 0% 9%;
 
-    --accent: 187 100% 28%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 250 100% 97%;
+    --accent-foreground: 188 85.7143% 53.3333%;
 
-    --destructive: 5 62% 46%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 85% 97%;
 
-    --border: 210 15% 88%;
-    --input: 195 10% 83%;
-    --ring: 187 100% 40%;
+    --border: 0 0% 83%;
+    --input: 0 0% 83%;
+    --ring: 243 75% 58%;
 
-    --radius: 1rem;
-    
+    --radius: 1.25rem;
+
     --glass-bg: hsl(var(--background) / 0.7);
     --glass-border: hsl(var(--border) / 0.9);
-    
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-glow: 0 0 32px rgba(0, 180, 204, 0.3);
+    --chart-1: 234 89% 73%;
+    --chart-2: 255 91% 76%;
+    --chart-3: 270 95% 75%;
+    --chart-4: 238 83% 66%;
+    --chart-5: 0 0% 45%;
+    --sidebar: 0 0% 98%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 243 75% 58%;
+    --sidebar-primary-foreground: 225 100% 96%;
+    --sidebar-accent: 0 0% 32%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 83%;
+    --sidebar-ring: 243 75% 58%;
+    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-serif: Lora, ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+    --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 240 2% 14%;
-    --foreground: 0 0% 100%;
+    --background: 0 0% 10.9804%;
+    --foreground: 0 0% 98%;
 
-    --card: 210 29% 20%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 14%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 210 29% 20%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 25%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 167 21% 47%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 192 55.1402% 58.0392%;
+    --primary-foreground: 243 48.1481% 21.1765%;
     --primary-hover: 167 20% 55%;
     --primary-glow: 167 20% 55%;
 
-    --secondary: 167 18% 30%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 45%;
+    --secondary-foreground: 0 0% 98%;
     --secondary-hover: 167 18% 35%;
 
     --success: 120 41% 54%;
@@ -81,26 +107,44 @@ All colors MUST be HSL.
     --warning: 49 55% 59%;
     --warning-foreground: 0 0% 100%;
 
-    --muted: 210 29% 20%;
-    --muted-foreground: 167 10% 60%;
+    --muted: 0 0% 45%;
+    --muted-foreground: 0 0% 98%;
 
-    --accent: 174 41% 64%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 201 96.3415% 32.1569%;
+    --accent-foreground: 198 93.2039% 59.6078%;
 
-    --destructive: 0 55% 63%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 85% 97%;
 
-    --border: 210 15% 25%;
-    --input: 167 18% 30%;
-    --ring: 167 21% 47%;
-    
+    --border: 0 0% 32%;
+    --input: 0 0% 32%;
+    --ring: 234 89% 73%;
+
     --glass-bg: hsl(var(--background) / 0.7);
     --glass-border: hsl(var(--border) / 0.6);
-    
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-glow: 0 0 32px rgba(94, 145, 136, 0.5);
+    --chart-1: 229 93% 81%;
+    --chart-2: 252 94% 85%;
+    --chart-3: 269 97% 85%;
+    --chart-4: 234 89% 73%;
+    --chart-5: 0 0% 45%;
+    --sidebar: 0 0% 14%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 234 89% 73%;
+    --sidebar-primary-foreground: 243 47% 20%;
+    --sidebar-accent: 255 91% 76%;
+    --sidebar-accent-foreground: 261 72% 22%;
+    --sidebar-border: 0 0% 32%;
+    --sidebar-ring: 234 89% 73%;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
 }
 
